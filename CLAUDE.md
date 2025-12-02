@@ -245,3 +245,67 @@ cargo clippy --workspace
 # Documentation generieren
 cargo doc --workspace --no-deps --open
 ```
+
+## Git Workflow
+
+### Conventional Commits
+
+Alle Commits folgen dem [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) Standard:
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+**Types:**
+
+| Type | Beschreibung |
+|------|--------------|
+| `feat` | Neues Feature |
+| `fix` | Bugfix |
+| `docs` | Dokumentation |
+| `style` | Formatierung (kein Code-Change) |
+| `refactor` | Code-Refactoring |
+| `perf` | Performance-Verbesserung |
+| `test` | Tests hinzufügen/ändern |
+| `build` | Build-System, Dependencies |
+| `ci` | CI/CD Konfiguration |
+| `chore` | Sonstige Änderungen |
+
+**Scopes (optional):**
+- `core` - rustine-core
+- `driver` - rustine-driver
+- `platform` - rustine-platform
+- `query` - rustine-query
+- `schema` - rustine-schema
+
+**Beispiele:**
+
+```bash
+feat(core): add SqlValue conversion for chrono types
+fix(driver): handle connection timeout correctly
+docs: update PRD with new requirements
+test(platform): add PostgreSQL quoting tests
+refactor(query): simplify WHERE clause building
+```
+
+**Breaking Changes:**
+
+```bash
+feat(core)!: change SqlValue enum structure
+
+BREAKING CHANGE: SqlValue variants renamed for clarity
+```
+
+### Versionierung
+
+Folgt [Semantic Versioning](https://semver.org/):
+
+- **MAJOR** (1.0.0): Breaking Changes
+- **MINOR** (0.1.0): Neue Features (rückwärtskompatibel)
+- **PATCH** (0.0.1): Bugfixes
+
+Aktuell: **v0.1.0-dev** (Pre-Release)
