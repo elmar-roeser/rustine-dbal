@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.1] - 2025-12-02
+
+### Fixed
+- Resolved all clippy warnings with strict pedantic linting enabled
+- Fixed `use_self` warnings by using `Self` instead of explicit type names
+- Replaced `format!()` string appends with `write!()` macro for efficiency
+- Used derived `Default` implementations with `#[default]` attribute
+- Fixed redundant closures and lifetime elision issues
+- Consolidated identical match arms
+- Changed small `Copy` types to pass by value instead of reference
+- Used `sort_unstable` for primitive types
+
+### Added
+- Strict clippy linting configuration in `Cargo.toml` (pedantic, nursery rules)
+- Comprehensive documentation:
+  - `# Errors` sections for all `Result`-returning functions
+  - Backticks for code references (`SQLite`, `DateTime`, etc.)
+  - Struct field and enum variant documentation
+
 ## [0.5.0] - 2025-12-02
 
 ### Added
@@ -134,7 +153,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - GitHub repository set up
 - .gitignore for Rust projects
 
-[Unreleased]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.2.0...v0.3.0
