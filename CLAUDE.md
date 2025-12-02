@@ -308,4 +308,37 @@ Folgt [Semantic Versioning](https://semver.org/):
 - **MINOR** (0.1.0): Neue Features (rückwärtskompatibel)
 - **PATCH** (0.0.1): Bugfixes
 
-Aktuell: **v0.1.0-dev** (Pre-Release)
+Aktuell: **v0.1.0**
+
+### Changelog
+
+Der [CHANGELOG.md](CHANGELOG.md) folgt dem [Keep a Changelog](https://keepachangelog.com/) Format.
+
+**Nach jedem Arbeitsschritt:**
+
+1. CHANGELOG.md unter `[Unreleased]` aktualisieren
+2. Kategorien verwenden:
+   - `Added` - Neue Features
+   - `Changed` - Änderungen an bestehenden Features
+   - `Deprecated` - Features die bald entfernt werden
+   - `Removed` - Entfernte Features
+   - `Fixed` - Bugfixes
+   - `Security` - Sicherheitsfixes
+
+**Bei Release:**
+
+1. `[Unreleased]` → `[X.Y.Z] - YYYY-MM-DD` umbenennen
+2. Neuen `[Unreleased]` Abschnitt hinzufügen
+3. Version in allen `Cargo.toml` aktualisieren
+4. Git Tag erstellen: `git tag -a vX.Y.Z -m "Release vX.Y.Z"`
+
+### Release-Workflow
+
+```bash
+# Version bump in Cargo.toml (workspace)
+# CHANGELOG.md aktualisieren
+git add -A
+git commit -m "chore: release vX.Y.Z"
+git tag -a vX.Y.Z -m "Release vX.Y.Z"
+git push origin main --tags
+```
