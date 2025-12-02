@@ -77,6 +77,9 @@ pub mod prelude {
 
     // Connection
     pub use crate::connection::Connection;
+
+    // Query Builder
+    pub use crate::query::{QueryBuilder, Expr};
 }
 
 // Re-export commonly used types at crate root

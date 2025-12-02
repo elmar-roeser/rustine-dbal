@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-12-02
+
+### Added
+- **Query Builder** (Epic 5)
+  - `QueryBuilder` - Fluent API for building SQL queries
+  - Support for SELECT, INSERT, UPDATE, DELETE queries
+  - `Expr` enum for building WHERE conditions (comparisons, AND, OR, NOT, IS NULL, IN, BETWEEN, LIKE)
+  - Helper functions: `col()`, `val()`, `param()`, `and()`, `or()`
+  - JOIN support: INNER, LEFT, RIGHT, FULL, CROSS with aliases
+  - ORDER BY with ASC/DESC direction
+  - GROUP BY with HAVING clause
+  - LIMIT and OFFSET
+  - DISTINCT queries
+  - RETURNING clause for PostgreSQL/SQLite
+  - Platform-specific SQL generation (uses Platform trait for quoting)
+  - 28 new unit tests for query builder (111 tests total)
+
 ## [0.3.0] - 2025-12-02
 
 ### Added
@@ -99,7 +116,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - GitHub repository set up
 - .gitignore for Rust projects
 
-[Unreleased]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/elmar-roeser/rustine-dbal/releases/tag/v0.1.0
