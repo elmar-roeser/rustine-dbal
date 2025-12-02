@@ -7,6 +7,8 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-12-02
+
 ### Added
 - **SQLite Driver** (Epic 2: Database Connectivity)
   - `SqliteDriver` - Treiber-Implementierung mit sqlx
@@ -77,5 +79,6 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 - GitHub Repository eingerichtet
 - .gitignore für Rust-Projekte
 
-[Unreleased]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/elmar-roeser/rustine-dbal/releases/tag/v0.1.0
