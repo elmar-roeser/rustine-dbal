@@ -9,13 +9,31 @@ members = [
     "rustine-schema",
 ]
 
+# ============================================================================
+# Versionierung nach Semantic Versioning (https://semver.org/lang/de/)
+# ============================================================================
+# Format: MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]
+#
+# MAJOR: Inkompatible API-Änderungen
+# MINOR: Neue Funktionalität (abwärtskompatibel)
+# PATCH: Bugfixes (abwärtskompatibel)
+#
+# Pre-Release: 0.1.0-alpha.1, 0.1.0-beta.1, 0.1.0-rc.1
+# Build-Metadaten: 0.1.0+20241202
+#
+# Während 0.x.y: API kann sich noch ändern
+# Ab 1.0.0: Stabile öffentliche API
+# ============================================================================
+
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.75"
-authors = ["Elmar"]
+authors = ["Elmar Röser <elmar@schrecknet.de>"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/elmar/rustine"
+repository = "https://github.com/elmar-roeser/rustine-dbal"
+homepage = "https://github.com/elmar-roeser/rustine-dbal"
+documentation = "https://docs.rs/rustine"
 keywords = ["database", "sql", "dbal", "query-builder", "schema"]
 categories = ["database"]
 

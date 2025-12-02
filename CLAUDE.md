@@ -302,13 +302,26 @@ BREAKING CHANGE: SqlValue variants renamed for clarity
 
 ### Versionierung
 
-Folgt [Semantic Versioning](https://semver.org/):
+Folgt [Semantic Versioning](https://semver.org/lang/de/) (SemVer):
 
-- **MAJOR** (1.0.0): Breaking Changes
-- **MINOR** (0.1.0): Neue Features (rückwärtskompatibel)
-- **PATCH** (0.0.1): Bugfixes
+```
+MAJOR.MINOR.PATCH[-PRERELEASE][+BUILD]
+```
 
-Aktuell: **v0.1.0**
+| Komponente | Beschreibung | Beispiel |
+|------------|--------------|----------|
+| **MAJOR** | Inkompatible API-Änderungen | 1.0.0 → 2.0.0 |
+| **MINOR** | Neue Funktionalität (abwärtskompatibel) | 1.0.0 → 1.1.0 |
+| **PATCH** | Bugfixes (abwärtskompatibel) | 1.0.0 → 1.0.1 |
+| **PRERELEASE** | Vorab-Versionen | 1.0.0-alpha.1, -beta.1, -rc.1 |
+| **BUILD** | Build-Metadaten | 1.0.0+20241202 |
+
+**Versionsregeln:**
+- Während **0.x.y**: API kann sich noch ändern (Entwicklungsphase)
+- Ab **1.0.0**: Stabile öffentliche API garantiert
+- Version in `Cargo.toml` (Workspace) ist Single Source of Truth
+
+Aktuell: **v0.1.0** (Entwicklungsphase)
 
 ### Changelog
 
