@@ -10,11 +10,22 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 ### Added
 - **SQLite Driver** (Epic 2: Database Connectivity)
   - `SqliteDriver` - Treiber-Implementierung mit sqlx
-  - `SqliteConnection` - Verbindungsmanagement mit Transaktions-Support
+  - `SqliteConnection` - Verbindungsmanagement mit echter einzelner Connection (nicht Pool)
   - `SqliteStatement` - Prepared Statements mit positional/named Parameters
   - `SqliteResult` - Ergebnisset-Iteration
   - Feature-Flag `sqlite` für optionale Aktivierung
-  - 12 neue Unit-Tests für SQLite-Funktionalität
+  - Verbesserte Typ-Erkennung für dynamische SQLite-Ausdrücke (COUNT(*), etc.)
+
+- **Transaction Management** (Epic 3)
+  - `Connection<D>` - High-Level Connection-Wrapper über Driver-Traits
+  - Nested Transactions via Savepoints (`RUSTINE_1`, `RUSTINE_2`, etc.)
+  - `begin_transaction()`, `commit()`, `rollback()` mit Nesting-Counter
+  - `transactional_boxed()` - Transaktionale Closure-API mit auto-commit/rollback
+  - `in_transaction()` - Einfaches Result-basiertes Commit/Rollback
+  - Transaction-State: `is_transaction_active()`, `is_rollback_only()`, `set_rollback_only()`
+  - `TransactionGuard` für RAII-Style Transaction-Management
+  - Drop-Guard mit Warning bei offenen Transactions (tracing Feature)
+  - 10 neue Unit-Tests für Transaction-Funktionalität (65 Tests gesamt)
 
 ### Changed
 - **BREAKING**: Projekt von Multi-Crate Workspace zu Monolith-Crate umstrukturiert

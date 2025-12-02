@@ -1,7 +1,7 @@
 //! SQLite driver implementation
 
 use async_trait::async_trait;
-use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
+use sqlx::sqlite::SqliteConnectOptions;
 use sqlx::ConnectOptions;
 use std::str::FromStr;
 
@@ -43,14 +43,13 @@ impl Driver for SqliteDriver {
             .disable_statement_logging()
             .clone();
 
-        // Create the connection pool with a single connection for simplicity
-        let pool = SqlitePoolOptions::new()
-            .max_connections(1)
-            .connect_with(options)
+        // Create a single connection (not a pool) for proper transaction support
+        let conn = options
+            .connect()
             .await
             .map_err(|e| ConnectionError::Refused(e.to_string()))?;
 
-        Ok(SqliteConnection::new(pool))
+        Ok(SqliteConnection::new(conn))
     }
 
     fn name(&self) -> &'static str {

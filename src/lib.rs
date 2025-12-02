@@ -43,6 +43,7 @@
 //! ```
 
 pub mod core;
+pub mod connection;
 pub mod driver;
 pub mod platform;
 pub mod query;
@@ -73,6 +74,9 @@ pub mod prelude {
 
     // Platform traits
     pub use crate::platform::Platform;
+
+    // Connection
+    pub use crate::connection::Connection;
 }
 
 // Re-export commonly used types at crate root
