@@ -4,15 +4,15 @@
 [![Documentation](https://docs.rs/rustine-dbal/badge.svg)](https://docs.rs/rustine-dbal)
 [![License](https://img.shields.io/crates/l/rustine-dbal.svg)](LICENSE)
 
-**Rustine DBAL** ist eine idiomatische Rust Database Abstraction Layer, inspiriert von [Doctrine DBAL](https://www.doctrine-project.org/projects/dbal.html).
+**Rustine DBAL** is an idiomatic Rust Database Abstraction Layer, inspired by [Doctrine DBAL](https://www.doctrine-project.org/projects/dbal.html).
 
 ## Features
 
-- **Connection Management** - Lazy Connections, Transaction-Support
-- **Transaction Support** - ACID Transactions mit Savepoint-basiertem Nesting
-- **Driver Abstraktion** - Einheitliche API für verschiedene Datenbanken
-- **Type System** - Bidirektionale Konvertierung zwischen Rust und SQL Typen
-- **Platform Abstraction** - SQL-Dialekt-Unterschiede abstrahiert
+- **Connection Management** - Lazy connections with transaction support
+- **Transaction Support** - ACID transactions with savepoint-based nesting
+- **Driver Abstraction** - Unified API for different databases
+- **Type System** - Bidirectional conversion between Rust and SQL types
+- **Platform Abstraction** - SQL dialect differences abstracted away
 
 ## Installation
 
@@ -23,37 +23,37 @@ rustine-dbal = { version = "0.2", features = ["sqlite"] }
 
 ### Feature Flags
 
-| Feature | Beschreibung |
+| Feature | Description |
 |---------|-------------|
-| `sqlite` | SQLite-Treiber via sqlx |
-| `chrono` | Datum/Zeit-Support (default) |
-| `uuid` | UUID-Support (default) |
-| `json` | JSON-Support (default) |
-| `decimal` | Dezimalzahlen-Support (default) |
+| `sqlite` | SQLite driver via sqlx |
+| `chrono` | Date/time support (default) |
+| `uuid` | UUID support (default) |
+| `json` | JSON support (default) |
+| `decimal` | Decimal number support (default) |
 | `tracing` | Logging via tracing |
 
-## Schnellstart
+## Quick Start
 
 ```rust
 use rustine_dbal::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // SQLite In-Memory Datenbank
+    // SQLite in-memory database
     let driver = SqliteDriver::new();
     let params = ConnectionParams::sqlite_memory();
     let conn = Connection::new(&driver, &params).await?;
 
-    // Tabelle erstellen
+    // Create table
     conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)").await?;
 
-    // Daten einfügen mit Transaction
+    // Insert data with transaction
     conn.begin_transaction().await?;
     conn.execute("INSERT INTO users (name) VALUES ('Alice')").await?;
     conn.execute("INSERT INTO users (name) VALUES ('Bob')").await?;
     conn.commit().await?;
 
-    // Daten abfragen
+    // Query data
     let mut result = conn.query("SELECT * FROM users").await?;
     for row in result.all_rows()? {
         println!("{:?}", row);
@@ -65,13 +65,13 @@ async fn main() -> Result<()> {
 
 ## Transaction Management
 
-### Einfache Transactions
+### Simple Transactions
 
 ```rust
 conn.begin_transaction().await?;
 conn.execute("INSERT INTO users (name) VALUES ('Alice')").await?;
 conn.commit().await?;
-// oder: conn.rollback().await?;
+// or: conn.rollback().await?;
 ```
 
 ### Nested Transactions (Savepoints)
@@ -90,23 +90,23 @@ conn.commit().await?;                      // Commit Level 1
 ### Transaction State
 
 ```rust
-conn.is_transaction_active()   // true wenn TX aktiv
+conn.is_transaction_active()     // true if TX active
 conn.transaction_nesting_level() // 0, 1, 2, ...
-conn.is_rollback_only()        // true wenn nur Rollback möglich
-conn.set_rollback_only()       // Markiert TX als rollback-only
+conn.is_rollback_only()          // true if only rollback possible
+conn.set_rollback_only()         // Mark TX as rollback-only
 ```
 
-## Architektur
+## Architecture
 
 ```
 rustine-dbal/
-├── core/           # Grundtypen (Error, SqlValue, ToSql, FromSql)
-├── connection/     # High-Level Connection mit TX-Management
-├── driver/         # Driver-Traits und Implementierungen
-│   └── sqlite/     # SQLite-Treiber
-├── platform/       # SQL-Dialekt-Abstraktionen
-├── query/          # Query Builder (geplant)
-└── schema/         # Schema-Introspection (geplant)
+├── core/           # Core types (Error, SqlValue, ToSql, FromSql)
+├── connection/     # High-level Connection with TX management
+├── driver/         # Driver traits and implementations
+│   └── sqlite/     # SQLite driver
+├── platform/       # SQL dialect abstractions
+├── query/          # Query Builder (planned)
+└── schema/         # Schema introspection (planned)
 ```
 
 ## Roadmap
@@ -114,22 +114,22 @@ rustine-dbal/
 - [x] **Epic 1**: Core Foundation (Types, Errors, Traits)
 - [x] **Epic 2**: SQLite Driver
 - [x] **Epic 3**: Transaction Management
-- [ ] **Epic 4**: Platform Abstraction (PostgreSQL, MySQL Dialekte)
+- [ ] **Epic 4**: Platform Abstraction (PostgreSQL, MySQL dialects)
 - [ ] **Epic 5**: Query Builder
 - [ ] **Epic 6**: Schema Introspection
 
-## Dokumentation
+## Documentation
 
-- [CHANGELOG](CHANGELOG.md) - Versionshistorie
-- [API Docs](https://docs.rs/rustine-dbal) - Rust-Dokumentation
+- [CHANGELOG](CHANGELOG.md) - Version history
+- [API Docs](https://docs.rs/rustine-dbal) - Rust documentation
 
-## Lizenz
+## License
 
-Dual-lizenziert unter [MIT](LICENSE-MIT) oder [Apache-2.0](LICENSE-APACHE).
+Dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE).
 
-## Beitragen
+## Contributing
 
-Contributions sind willkommen! Bitte beachte:
+Contributions are welcome! Please note:
 
-- [Conventional Commits](https://www.conventionalcommits.org/) für Commit-Messages
-- [Semantic Versioning](https://semver.org/) für Versionierung
+- [Conventional Commits](https://www.conventionalcommits.org/) for commit messages
+- [Semantic Versioning](https://semver.org/) for versioning
