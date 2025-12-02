@@ -4,12 +4,13 @@
 //! for DDL generation and schema introspection.
 
 /// SQL column type with optional parameters
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub enum SqlType {
     // Integer types
     /// SMALLINT (2 bytes)
     SmallInt,
     /// INTEGER (4 bytes)
+    #[default]
     Integer,
     /// BIGINT (8 bytes)
     BigInt,
@@ -22,21 +23,38 @@ pub enum SqlType {
 
     // Exact numeric
     /// DECIMAL/NUMERIC with precision and scale
-    Decimal { precision: u8, scale: u8 },
+    Decimal {
+        /// Total number of digits
+        precision: u8,
+        /// Number of digits after decimal point
+        scale: u8,
+    },
 
     // String types
     /// CHAR(n) - fixed length
-    Char { length: u32 },
+    Char {
+        /// Fixed string length
+        length: u32,
+    },
     /// VARCHAR(n) - variable length
-    Varchar { length: u32 },
+    Varchar {
+        /// Maximum string length
+        length: u32,
+    },
     /// TEXT - unlimited length
     Text,
 
     // Binary types
     /// BINARY(n) - fixed length binary
-    Binary { length: u32 },
+    Binary {
+        /// Fixed binary length
+        length: u32,
+    },
     /// VARBINARY(n) / BYTEA - variable length binary
-    VarBinary { length: u32 },
+    VarBinary {
+        /// Maximum binary length
+        length: u32,
+    },
     /// BLOB - large binary object
     Blob,
 
@@ -48,11 +66,20 @@ pub enum SqlType {
     /// DATE
     Date,
     /// TIME with optional precision
-    Time { precision: Option<u8> },
+    Time {
+        /// Fractional seconds precision
+        precision: Option<u8>,
+    },
     /// TIMESTAMP/DATETIME with optional precision
-    Timestamp { precision: Option<u8> },
+    Timestamp {
+        /// Fractional seconds precision
+        precision: Option<u8>,
+    },
     /// TIMESTAMP WITH TIME ZONE
-    TimestampTz { precision: Option<u8> },
+    TimestampTz {
+        /// Fractional seconds precision
+        precision: Option<u8>,
+    },
 
     // Special types
     /// UUID (native or CHAR(36))
@@ -67,32 +94,38 @@ pub enum SqlType {
 
 impl SqlType {
     /// Create a VARCHAR with the given length
-    pub fn varchar(length: u32) -> Self {
+    #[must_use]
+    pub const fn varchar(length: u32) -> Self {
         Self::Varchar { length }
     }
 
     /// Create a CHAR with the given length
-    pub fn char(length: u32) -> Self {
+    #[must_use]
+    pub const fn char(length: u32) -> Self {
         Self::Char { length }
     }
 
     /// Create a DECIMAL with precision and scale
-    pub fn decimal(precision: u8, scale: u8) -> Self {
+    #[must_use]
+    pub const fn decimal(precision: u8, scale: u8) -> Self {
         Self::Decimal { precision, scale }
     }
 
     /// Create a TIMESTAMP with optional precision
-    pub fn timestamp(precision: Option<u8>) -> Self {
+    #[must_use]
+    pub const fn timestamp(precision: Option<u8>) -> Self {
         Self::Timestamp { precision }
     }
 
     /// Check if this type is a string type
-    pub fn is_string(&self) -> bool {
+    #[must_use]
+    pub const fn is_string(&self) -> bool {
         matches!(self, Self::Char { .. } | Self::Varchar { .. } | Self::Text)
     }
 
     /// Check if this type is a numeric type
-    pub fn is_numeric(&self) -> bool {
+    #[must_use]
+    pub const fn is_numeric(&self) -> bool {
         matches!(
             self,
             Self::SmallInt
@@ -107,7 +140,8 @@ impl SqlType {
     }
 
     /// Check if this type is a date/time type
-    pub fn is_datetime(&self) -> bool {
+    #[must_use]
+    pub const fn is_datetime(&self) -> bool {
         matches!(
             self,
             Self::Date
@@ -118,7 +152,8 @@ impl SqlType {
     }
 
     /// Check if this type is a binary type
-    pub fn is_binary(&self) -> bool {
+    #[must_use]
+    pub const fn is_binary(&self) -> bool {
         matches!(
             self,
             Self::Binary { .. } | Self::VarBinary { .. } | Self::Blob
@@ -126,14 +161,9 @@ impl SqlType {
     }
 
     /// Check if this type supports auto-increment
-    pub fn is_auto_increment(&self) -> bool {
+    #[must_use]
+    pub const fn is_auto_increment(&self) -> bool {
         matches!(self, Self::Serial | Self::BigSerial)
-    }
-}
-
-impl Default for SqlType {
-    fn default() -> Self {
-        Self::Integer
     }
 }
 
@@ -156,6 +186,7 @@ pub struct Column {
 
 impl Column {
     /// Create a new column with the given name and type
+    #[must_use]
     pub fn new(name: impl Into<String>, sql_type: SqlType) -> Self {
         Self {
             name: name.into(),
@@ -168,24 +199,28 @@ impl Column {
     }
 
     /// Set the column as NOT NULL
-    pub fn not_null(mut self) -> Self {
+    #[must_use]
+    pub const fn not_null(mut self) -> Self {
         self.nullable = false;
         self
     }
 
     /// Set a default value
+    #[must_use]
     pub fn default(mut self, value: impl Into<String>) -> Self {
         self.default = Some(value.into());
         self
     }
 
     /// Set as auto-incrementing
-    pub fn auto_increment(mut self) -> Self {
+    #[must_use]
+    pub const fn auto_increment(mut self) -> Self {
         self.auto_increment = true;
         self
     }
 
     /// Set a comment
+    #[must_use]
     pub fn comment(mut self, comment: impl Into<String>) -> Self {
         self.comment = Some(comment.into());
         self
@@ -207,6 +242,7 @@ pub struct Index {
 
 impl Index {
     /// Create a new index
+    #[must_use]
     pub fn new(name: impl Into<String>, columns: Vec<String>) -> Self {
         Self {
             name: name.into(),
@@ -217,6 +253,7 @@ impl Index {
     }
 
     /// Create a unique index
+    #[must_use]
     pub fn unique(name: impl Into<String>, columns: Vec<String>) -> Self {
         Self {
             name: name.into(),
@@ -227,7 +264,8 @@ impl Index {
     }
 
     /// Create a primary key index
-    pub fn primary(columns: Vec<String>) -> Self {
+    #[must_use]
+    pub const fn primary(columns: Vec<String>) -> Self {
         Self {
             name: String::new(), // Primary keys often don't have explicit names
             columns,
@@ -272,7 +310,8 @@ pub enum ForeignKeyAction {
 
 impl ForeignKeyAction {
     /// Get the SQL representation
-    pub fn as_sql(&self) -> &'static str {
+    #[must_use]
+    pub const fn as_sql(&self) -> &'static str {
         match self {
             Self::NoAction => "NO ACTION",
             Self::Restrict => "RESTRICT",
@@ -300,6 +339,7 @@ pub struct Table {
 
 impl Table {
     /// Create a new table with the given name
+    #[must_use]
     pub fn new(name: impl Into<String>) -> Self {
         Self {
             name: name.into(),
@@ -311,30 +351,35 @@ impl Table {
     }
 
     /// Add a column
+    #[must_use]
     pub fn column(mut self, column: Column) -> Self {
         self.columns.push(column);
         self
     }
 
     /// Add an index
+    #[must_use]
     pub fn index(mut self, index: Index) -> Self {
         self.indexes.push(index);
         self
     }
 
     /// Add a foreign key
+    #[must_use]
     pub fn foreign_key(mut self, fk: ForeignKey) -> Self {
         self.foreign_keys.push(fk);
         self
     }
 
     /// Set a comment
+    #[must_use]
     pub fn comment(mut self, comment: impl Into<String>) -> Self {
         self.comment = Some(comment.into());
         self
     }
 
     /// Get the primary key columns
+    #[must_use]
     pub fn primary_key_columns(&self) -> Option<&[String]> {
         self.indexes
             .iter()

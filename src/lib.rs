@@ -8,7 +8,7 @@
 //! - **Transaction Support**: ACID transactions with savepoint-based nesting
 //! - **Query Builder**: Type-safe, fluent API for building SQL queries
 //! - **Schema Introspection**: Read and manipulate database schemas
-//! - **Platform Abstraction**: Write once, run on PostgreSQL, MySQL, SQLite
+//! - **Platform Abstraction**: Write once, run on `PostgreSQL`, `MySQL`, `SQLite`
 //! - **Type System**: Bidirectional conversion between Rust and SQL types
 //!
 //! ## Modules

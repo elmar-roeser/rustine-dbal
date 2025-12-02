@@ -33,17 +33,20 @@ pub enum ParameterType {
 
 impl ParameterType {
     /// Check if this parameter type represents a null value
-    pub fn is_null(&self) -> bool {
+    #[must_use]
+    pub const fn is_null(&self) -> bool {
         matches!(self, Self::Null)
     }
 
     /// Check if this parameter type represents binary data
-    pub fn is_binary(&self) -> bool {
+    #[must_use]
+    pub const fn is_binary(&self) -> bool {
         matches!(self, Self::Binary | Self::LargeObject)
     }
 
     /// Check if this parameter type represents text data
-    pub fn is_text(&self) -> bool {
+    #[must_use]
+    pub const fn is_text(&self) -> bool {
         matches!(self, Self::String | Self::Ascii)
     }
 }
@@ -67,23 +70,29 @@ impl std::fmt::Display for ParameterType {
 pub enum Parameter {
     /// Positional parameter (e.g., $1, ?)
     Positional {
+        /// 1-based parameter index
         index: usize,
+        /// Expected parameter type
         param_type: ParameterType,
     },
     /// Named parameter (e.g., :name)
     Named {
+        /// Parameter name (without prefix)
         name: String,
+        /// Expected parameter type
         param_type: ParameterType,
     },
 }
 
 impl Parameter {
     /// Create a new positional parameter
-    pub fn positional(index: usize, param_type: ParameterType) -> Self {
+    #[must_use]
+    pub const fn positional(index: usize, param_type: ParameterType) -> Self {
         Self::Positional { index, param_type }
     }
 
     /// Create a new named parameter
+    #[must_use]
     pub fn named(name: impl Into<String>, param_type: ParameterType) -> Self {
         Self::Named {
             name: name.into(),
@@ -92,20 +101,22 @@ impl Parameter {
     }
 
     /// Get the parameter type
-    pub fn param_type(&self) -> ParameterType {
+    #[must_use]
+    pub const fn param_type(&self) -> ParameterType {
         match self {
-            Self::Positional { param_type, .. } => *param_type,
-            Self::Named { param_type, .. } => *param_type,
+            Self::Positional { param_type, .. } | Self::Named { param_type, .. } => *param_type,
         }
     }
 
     /// Check if this is a positional parameter
-    pub fn is_positional(&self) -> bool {
+    #[must_use]
+    pub const fn is_positional(&self) -> bool {
         matches!(self, Self::Positional { .. })
     }
 
     /// Check if this is a named parameter
-    pub fn is_named(&self) -> bool {
+    #[must_use]
+    pub const fn is_named(&self) -> bool {
         matches!(self, Self::Named { .. })
     }
 }

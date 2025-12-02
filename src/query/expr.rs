@@ -54,7 +54,8 @@ pub enum ComparisonOp {
 
 impl ComparisonOp {
     /// Get the SQL representation
-    pub fn as_sql(&self) -> &'static str {
+    #[must_use]
+    pub const fn as_sql(&self) -> &'static str {
         match self {
             Self::Eq => "=",
             Self::Ne => "<>",
@@ -68,92 +69,111 @@ impl ComparisonOp {
 
 impl Expr {
     /// Create a column reference
+    #[must_use]
     pub fn col(name: impl Into<String>) -> Self {
         Self::Column(name.into())
     }
 
     /// Create a literal value
+    #[must_use]
     pub fn val(value: impl Into<SqlValue>) -> Self {
         Self::Value(value.into())
     }
 
     /// Create a parameter placeholder
+    #[must_use]
     pub fn param(name: impl Into<String>) -> Self {
         Self::Param(name.into())
     }
 
     /// Create a raw SQL expression
+    #[must_use]
     pub fn raw(sql: impl Into<String>) -> Self {
         Self::Raw(sql.into())
     }
 
     /// Create an equality comparison: self = other
-    pub fn eq(self, other: impl Into<Expr>) -> Self {
+    #[must_use]
+    pub fn eq(self, other: impl Into<Self>) -> Self {
         Self::Comparison(Box::new(self), ComparisonOp::Eq, Box::new(other.into()))
     }
 
     /// Create a not-equal comparison: self <> other
-    pub fn ne(self, other: impl Into<Expr>) -> Self {
+    #[must_use]
+    pub fn ne(self, other: impl Into<Self>) -> Self {
         Self::Comparison(Box::new(self), ComparisonOp::Ne, Box::new(other.into()))
     }
 
     /// Create a less-than comparison: self < other
-    pub fn lt(self, other: impl Into<Expr>) -> Self {
+    #[must_use]
+    pub fn lt(self, other: impl Into<Self>) -> Self {
         Self::Comparison(Box::new(self), ComparisonOp::Lt, Box::new(other.into()))
     }
 
     /// Create a less-than-or-equal comparison: self <= other
-    pub fn le(self, other: impl Into<Expr>) -> Self {
+    #[must_use]
+    pub fn le(self, other: impl Into<Self>) -> Self {
         Self::Comparison(Box::new(self), ComparisonOp::Le, Box::new(other.into()))
     }
 
     /// Create a greater-than comparison: self > other
-    pub fn gt(self, other: impl Into<Expr>) -> Self {
+    #[must_use]
+    pub fn gt(self, other: impl Into<Self>) -> Self {
         Self::Comparison(Box::new(self), ComparisonOp::Gt, Box::new(other.into()))
     }
 
     /// Create a greater-than-or-equal comparison: self >= other
-    pub fn ge(self, other: impl Into<Expr>) -> Self {
+    #[must_use]
+    pub fn ge(self, other: impl Into<Self>) -> Self {
         Self::Comparison(Box::new(self), ComparisonOp::Ge, Box::new(other.into()))
     }
 
     /// Create IS NULL expression
+    #[must_use]
     pub fn is_null(self) -> Self {
         Self::IsNull(Box::new(self))
     }
 
     /// Create IS NOT NULL expression
+    #[must_use]
     pub fn is_not_null(self) -> Self {
         Self::IsNotNull(Box::new(self))
     }
 
     /// Create IN expression
-    pub fn in_list(self, values: Vec<Expr>) -> Self {
+    #[must_use]
+    pub fn in_list(self, values: Vec<Self>) -> Self {
         Self::In(Box::new(self), values)
     }
 
     /// Create NOT IN expression
-    pub fn not_in_list(self, values: Vec<Expr>) -> Self {
+    #[must_use]
+    pub fn not_in_list(self, values: Vec<Self>) -> Self {
         Self::NotIn(Box::new(self), values)
     }
 
     /// Create BETWEEN expression
-    pub fn between(self, low: impl Into<Expr>, high: impl Into<Expr>) -> Self {
+    #[must_use]
+    pub fn between(self, low: impl Into<Self>, high: impl Into<Self>) -> Self {
         Self::Between(Box::new(self), Box::new(low.into()), Box::new(high.into()))
     }
 
     /// Create LIKE expression
+    #[must_use]
     pub fn like(self, pattern: impl Into<String>) -> Self {
         Self::Like(Box::new(self), pattern.into())
     }
 
     /// Negate this expression
+    #[must_use]
+    #[allow(clippy::should_implement_trait)]
     pub fn not(self) -> Self {
         Self::Not(Box::new(self))
     }
 
     /// Combine with AND
-    pub fn and(self, other: impl Into<Expr>) -> Self {
+    #[must_use]
+    pub fn and(self, other: impl Into<Self>) -> Self {
         match self {
             Self::And(mut exprs) => {
                 exprs.push(other.into());
@@ -164,7 +184,8 @@ impl Expr {
     }
 
     /// Combine with OR
-    pub fn or(self, other: impl Into<Expr>) -> Self {
+    #[must_use]
+    pub fn or(self, other: impl Into<Self>) -> Self {
         match self {
             Self::Or(mut exprs) => {
                 exprs.push(other.into());
@@ -213,27 +234,32 @@ impl From<SqlValue> for Expr {
 }
 
 /// Helper function to create a column expression
+#[must_use]
 pub fn col(name: impl Into<String>) -> Expr {
     Expr::col(name)
 }
 
 /// Helper function to create a value expression
+#[must_use]
 pub fn val(value: impl Into<SqlValue>) -> Expr {
     Expr::val(value)
 }
 
 /// Helper function to create a parameter expression
+#[must_use]
 pub fn param(name: impl Into<String>) -> Expr {
     Expr::param(name)
 }
 
 /// Helper function for AND expressions
-pub fn and(exprs: Vec<Expr>) -> Expr {
+#[must_use]
+pub const fn and(exprs: Vec<Expr>) -> Expr {
     Expr::And(exprs)
 }
 
 /// Helper function for OR expressions
-pub fn or(exprs: Vec<Expr>) -> Expr {
+#[must_use]
+pub const fn or(exprs: Vec<Expr>) -> Expr {
     Expr::Or(exprs)
 }
 

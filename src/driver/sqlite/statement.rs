@@ -1,4 +1,4 @@
-//! SQLite prepared statement implementation
+//! `SQLite` prepared statement implementation
 
 use async_trait::async_trait;
 use sqlx::sqlite::SqliteConnection as SqlxSqliteConnection;
@@ -10,14 +10,18 @@ use crate::driver::DriverStatement;
 
 use super::SqliteResult;
 
-/// SQLite prepared statement
+/// `SQLite` prepared statement
 ///
 /// Note: This implementation stores the SQL and parameters, and executes
 /// them when `execute()` or `execute_update()` is called. For true prepared
-/// statement support with connection binding, use the Connection directly.
+/// statement support with connection binding, use the `Connection` directly.
+#[derive(Debug)]
 pub struct SqliteStatement {
+    /// The SQL query string
     sql: String,
+    /// Positional parameters indexed by position
     positional_params: HashMap<usize, SqlValue>,
+    /// Named parameters indexed by name
     named_params: HashMap<String, SqlValue>,
 }
 
@@ -34,9 +38,9 @@ impl SqliteStatement {
 
     /// Create a new prepared statement with connection reference
     /// Note: The connection guard is immediately dropped as we store only the SQL
-    pub(crate) fn new_with_connection<'a>(
+    pub(crate) fn new_with_connection(
         sql: String,
-        _conn: MutexGuard<'a, SqlxSqliteConnection>,
+        _conn: MutexGuard<'_, SqlxSqliteConnection>,
     ) -> Self {
         Self {
             sql,
@@ -53,16 +57,17 @@ impl SqliteStatement {
 
         // Handle named parameters (convert :name to ?N format)
         for (name, value) in &self.named_params {
-            let placeholder = format!(":{}", name);
+            let placeholder = format!(":{name}");
             if sql.contains(&placeholder) {
                 values.push(value.clone());
-                sql = sql.replace(&placeholder, &format!("?{}", values.len()));
+                let len = values.len();
+                sql = sql.replace(&placeholder, &format!("?{len}"));
             }
         }
 
         // Handle positional parameters
         let mut positions: Vec<_> = self.positional_params.keys().copied().collect();
-        positions.sort();
+        positions.sort_unstable();
 
         for pos in positions {
             if let Some(value) = self.positional_params.get(&pos) {

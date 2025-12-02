@@ -5,9 +5,17 @@ use crate::core::{Result, SqlValue};
 /// A result set from a query
 pub trait DriverResult: Send + Sync {
     /// Get the next row from the result set
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if fetching the row fails.
     fn next_row(&mut self) -> Result<Option<Vec<SqlValue>>>;
 
     /// Get all remaining rows
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if fetching any row fails.
     fn all_rows(&mut self) -> Result<Vec<Vec<SqlValue>>> {
         let mut rows = Vec::new();
         while let Some(row) = self.next_row()? {

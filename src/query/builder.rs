@@ -7,24 +7,34 @@ use super::expr::Expr;
 /// The type of SQL query
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum QueryType {
+    /// SELECT query
     Select,
+    /// INSERT query
     Insert,
+    /// UPDATE query
     Update,
+    /// DELETE query
     Delete,
 }
 
 /// JOIN type
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum JoinType {
+    /// INNER JOIN
     Inner,
+    /// LEFT OUTER JOIN
     Left,
+    /// RIGHT OUTER JOIN
     Right,
+    /// FULL OUTER JOIN
     Full,
+    /// CROSS JOIN
     Cross,
 }
 
 impl JoinType {
-    fn as_sql(&self) -> &'static str {
+    /// Get the SQL representation of this join type
+    const fn as_sql(self) -> &'static str {
         match self {
             Self::Inner => "INNER JOIN",
             Self::Left => "LEFT JOIN",
@@ -38,13 +48,16 @@ impl JoinType {
 /// ORDER BY direction
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum OrderDirection {
+    /// Ascending order (A-Z, 0-9)
     #[default]
     Asc,
+    /// Descending order (Z-A, 9-0)
     Desc,
 }
 
 impl OrderDirection {
-    fn as_sql(&self) -> &'static str {
+    /// Get the SQL representation of this order direction
+    const fn as_sql(self) -> &'static str {
         match self {
             Self::Asc => "ASC",
             Self::Desc => "DESC",
@@ -55,42 +68,64 @@ impl OrderDirection {
 /// A JOIN clause
 #[derive(Debug, Clone)]
 struct Join {
-    join_type: JoinType,
+    /// Type of join (INNER, LEFT, etc.)
+    kind: JoinType,
+    /// Table to join
     table: String,
+    /// Optional table alias
     alias: Option<String>,
+    /// Join condition
     condition: Expr,
 }
 
 /// An ORDER BY clause
 #[derive(Debug, Clone)]
 struct OrderBy {
+    /// Column to order by
     column: String,
+    /// Sort direction
     direction: OrderDirection,
 }
 
 /// A fluent SQL query builder
 #[derive(Debug, Clone)]
 pub struct QueryBuilder {
+    /// Type of query (SELECT, INSERT, etc.)
     query_type: QueryType,
+    /// Main table name
     table: String,
+    /// Table alias
     table_alias: Option<String>,
+    /// Selected columns
     columns: Vec<String>,
+    /// Values for INSERT
     values: Vec<Vec<SqlValue>>,
+    /// Column-value pairs for UPDATE
     set_values: Vec<(String, SqlValue)>,
+    /// WHERE clause expression
     where_expr: Option<Expr>,
+    /// JOIN clauses
     joins: Vec<Join>,
+    /// GROUP BY columns
     group_by: Vec<String>,
+    /// HAVING clause expression
     having: Option<Expr>,
+    /// ORDER BY clauses
     order_by: Vec<OrderBy>,
+    /// LIMIT value
     limit: Option<u64>,
+    /// OFFSET value
     offset: Option<u64>,
+    /// DISTINCT flag
     distinct: bool,
+    /// RETURNING columns
     returning: Vec<String>,
 }
 
 impl QueryBuilder {
     /// Create a new SELECT query builder
-    pub fn select() -> Self {
+    #[must_use]
+    pub const fn select() -> Self {
         Self {
             query_type: QueryType::Select,
             table: String::new(),
@@ -111,6 +146,7 @@ impl QueryBuilder {
     }
 
     /// Create a new INSERT query builder
+    #[must_use]
     pub fn insert() -> Self {
         Self {
             query_type: QueryType::Insert,
@@ -119,6 +155,7 @@ impl QueryBuilder {
     }
 
     /// Create a new UPDATE query builder
+    #[must_use]
     pub fn update() -> Self {
         Self {
             query_type: QueryType::Update,
@@ -127,6 +164,7 @@ impl QueryBuilder {
     }
 
     /// Create a new DELETE query builder
+    #[must_use]
     pub fn delete() -> Self {
         Self {
             query_type: QueryType::Delete,
@@ -139,25 +177,29 @@ impl QueryBuilder {
     // ========================================================================
 
     /// Add columns to select
+    #[must_use]
     pub fn columns(mut self, columns: &[&str]) -> Self {
-        self.columns.extend(columns.iter().map(|s| s.to_string()));
+        self.columns.extend(columns.iter().map(|s| (*s).to_string()));
         self
     }
 
     /// Add a single column to select
+    #[must_use]
     pub fn column(mut self, column: &str) -> Self {
         self.columns.push(column.to_string());
         self
     }
 
     /// Select all columns (*)
+    #[must_use]
     pub fn all(mut self) -> Self {
         self.columns.push("*".to_string());
         self
     }
 
     /// Make the SELECT DISTINCT
-    pub fn distinct(mut self) -> Self {
+    #[must_use]
+    pub const fn distinct(mut self) -> Self {
         self.distinct = true;
         self
     }
@@ -167,24 +209,28 @@ impl QueryBuilder {
     // ========================================================================
 
     /// Set the table to query from
+    #[must_use]
     pub fn from(mut self, table: &str) -> Self {
         self.table = table.to_string();
         self
     }
 
     /// Set table alias
+    #[must_use]
     pub fn alias(mut self, alias: &str) -> Self {
         self.table_alias = Some(alias.to_string());
         self
     }
 
     /// Set the table for INSERT
+    #[must_use]
     pub fn into(mut self, table: &str) -> Self {
         self.table = table.to_string();
         self
     }
 
     /// Set the table for UPDATE
+    #[must_use]
     pub fn table(mut self, table: &str) -> Self {
         self.table = table.to_string();
         self
@@ -195,6 +241,7 @@ impl QueryBuilder {
     // ========================================================================
 
     /// Add a WHERE condition
+    #[must_use]
     pub fn where_expr(mut self, expr: Expr) -> Self {
         self.where_expr = Some(match self.where_expr {
             Some(existing) => existing.and(expr),
@@ -204,32 +251,38 @@ impl QueryBuilder {
     }
 
     /// Add a WHERE column = value condition
+    #[must_use]
     pub fn where_eq(self, column: &str, value: impl Into<SqlValue>) -> Self {
         self.where_expr(Expr::col(column).eq(Expr::val(value.into())))
     }
 
     /// Add a WHERE column IS NULL condition
+    #[must_use]
     pub fn where_null(self, column: &str) -> Self {
         self.where_expr(Expr::col(column).is_null())
     }
 
     /// Add a WHERE column IS NOT NULL condition
+    #[must_use]
     pub fn where_not_null(self, column: &str) -> Self {
         self.where_expr(Expr::col(column).is_not_null())
     }
 
     /// Add a WHERE column IN (values) condition
+    #[must_use]
     pub fn where_in(self, column: &str, values: Vec<SqlValue>) -> Self {
         let exprs: Vec<Expr> = values.into_iter().map(Expr::val).collect();
         self.where_expr(Expr::col(column).in_list(exprs))
     }
 
     /// Add a WHERE column LIKE pattern condition
+    #[must_use]
     pub fn where_like(self, column: &str, pattern: &str) -> Self {
         self.where_expr(Expr::col(column).like(pattern))
     }
 
     /// Add a WHERE with OR condition
+    #[must_use]
     pub fn or_where(mut self, expr: Expr) -> Self {
         self.where_expr = Some(match self.where_expr {
             Some(existing) => existing.or(expr),
@@ -243,9 +296,10 @@ impl QueryBuilder {
     // ========================================================================
 
     /// Add an INNER JOIN
+    #[must_use]
     pub fn inner_join(mut self, table: &str, condition: Expr) -> Self {
         self.joins.push(Join {
-            join_type: JoinType::Inner,
+            kind: JoinType::Inner,
             table: table.to_string(),
             alias: None,
             condition,
@@ -254,9 +308,10 @@ impl QueryBuilder {
     }
 
     /// Add a LEFT JOIN
+    #[must_use]
     pub fn left_join(mut self, table: &str, condition: Expr) -> Self {
         self.joins.push(Join {
-            join_type: JoinType::Left,
+            kind: JoinType::Left,
             table: table.to_string(),
             alias: None,
             condition,
@@ -265,9 +320,10 @@ impl QueryBuilder {
     }
 
     /// Add a RIGHT JOIN
+    #[must_use]
     pub fn right_join(mut self, table: &str, condition: Expr) -> Self {
         self.joins.push(Join {
-            join_type: JoinType::Right,
+            kind: JoinType::Right,
             table: table.to_string(),
             alias: None,
             condition,
@@ -276,9 +332,10 @@ impl QueryBuilder {
     }
 
     /// Add a JOIN with alias
-    pub fn join_alias(mut self, join_type: JoinType, table: &str, alias: &str, condition: Expr) -> Self {
+    #[must_use]
+    pub fn join_alias(mut self, kind: JoinType, table: &str, alias: &str, condition: Expr) -> Self {
         self.joins.push(Join {
-            join_type,
+            kind,
             table: table.to_string(),
             alias: Some(alias.to_string()),
             condition,
@@ -291,12 +348,14 @@ impl QueryBuilder {
     // ========================================================================
 
     /// Add GROUP BY columns
+    #[must_use]
     pub fn group_by(mut self, columns: &[&str]) -> Self {
-        self.group_by.extend(columns.iter().map(|s| s.to_string()));
+        self.group_by.extend(columns.iter().map(|s| (*s).to_string()));
         self
     }
 
     /// Add HAVING condition
+    #[must_use]
     pub fn having(mut self, expr: Expr) -> Self {
         self.having = Some(expr);
         self
@@ -307,6 +366,7 @@ impl QueryBuilder {
     // ========================================================================
 
     /// Add ORDER BY clause
+    #[must_use]
     pub fn order_by(mut self, column: &str, direction: OrderDirection) -> Self {
         self.order_by.push(OrderBy {
             column: column.to_string(),
@@ -316,23 +376,27 @@ impl QueryBuilder {
     }
 
     /// Add ORDER BY ASC
+    #[must_use]
     pub fn order_by_asc(self, column: &str) -> Self {
         self.order_by(column, OrderDirection::Asc)
     }
 
     /// Add ORDER BY DESC
+    #[must_use]
     pub fn order_by_desc(self, column: &str) -> Self {
         self.order_by(column, OrderDirection::Desc)
     }
 
     /// Set LIMIT
-    pub fn limit(mut self, limit: u64) -> Self {
+    #[must_use]
+    pub const fn limit(mut self, limit: u64) -> Self {
         self.limit = Some(limit);
         self
     }
 
     /// Set OFFSET
-    pub fn offset(mut self, offset: u64) -> Self {
+    #[must_use]
+    pub const fn offset(mut self, offset: u64) -> Self {
         self.offset = Some(offset);
         self
     }
@@ -342,18 +406,21 @@ impl QueryBuilder {
     // ========================================================================
 
     /// Set columns for INSERT
+    #[must_use]
     pub fn insert_columns(mut self, columns: &[&str]) -> Self {
-        self.columns = columns.iter().map(|s| s.to_string()).collect();
+        self.columns = columns.iter().map(|s| (*s).to_string()).collect();
         self
     }
 
     /// Add a row of values for INSERT
+    #[must_use]
     pub fn values(mut self, values: Vec<SqlValue>) -> Self {
         self.values.push(values);
         self
     }
 
     /// Add multiple rows for INSERT
+    #[must_use]
     pub fn values_batch(mut self, rows: Vec<Vec<SqlValue>>) -> Self {
         self.values.extend(rows);
         self
@@ -364,6 +431,7 @@ impl QueryBuilder {
     // ========================================================================
 
     /// Set a column value for UPDATE
+    #[must_use]
     pub fn set(mut self, column: &str, value: impl Into<SqlValue>) -> Self {
         self.set_values.push((column.to_string(), value.into()));
         self
@@ -373,9 +441,10 @@ impl QueryBuilder {
     // RETURNING clause
     // ========================================================================
 
-    /// Add RETURNING clause (PostgreSQL, SQLite 3.35+)
+    /// Add RETURNING clause (`PostgreSQL`, `SQLite` 3.35+)
+    #[must_use]
     pub fn returning(mut self, columns: &[&str]) -> Self {
-        self.returning.extend(columns.iter().map(|s| s.to_string()));
+        self.returning.extend(columns.iter().map(|s| (*s).to_string()));
         self
     }
 
@@ -384,6 +453,7 @@ impl QueryBuilder {
     // ========================================================================
 
     /// Build the SQL query for a specific platform
+    #[must_use]
     pub fn to_sql<P: Platform>(&self, platform: &P) -> String {
         match self.query_type {
             QueryType::Select => self.build_select(platform),
@@ -393,6 +463,7 @@ impl QueryBuilder {
         }
     }
 
+    /// Build a SELECT SQL statement
     fn build_select<P: Platform>(&self, platform: &P) -> String {
         let mut sql = String::from("SELECT ");
 
@@ -421,7 +492,7 @@ impl QueryBuilder {
         // JOINs
         for join in &self.joins {
             sql.push(' ');
-            sql.push_str(join.join_type.as_sql());
+            sql.push_str(join.kind.as_sql());
             sql.push(' ');
             sql.push_str(&platform.quote_identifier(&join.table));
             if let Some(ref alias) = join.alias {
@@ -468,6 +539,7 @@ impl QueryBuilder {
         sql
     }
 
+    /// Build an INSERT SQL statement
     fn build_insert<P: Platform>(&self, platform: &P) -> String {
         let mut sql = String::from("INSERT INTO ");
         sql.push_str(&platform.quote_identifier(&self.table));
@@ -506,6 +578,7 @@ impl QueryBuilder {
         sql
     }
 
+    /// Build an UPDATE SQL statement
     fn build_update<P: Platform>(&self, platform: &P) -> String {
         let mut sql = String::from("UPDATE ");
         sql.push_str(&platform.quote_identifier(&self.table));
@@ -537,6 +610,7 @@ impl QueryBuilder {
         sql
     }
 
+    /// Build a DELETE SQL statement
     fn build_delete<P: Platform>(&self, platform: &P) -> String {
         let mut sql = String::from("DELETE FROM ");
         sql.push_str(&platform.quote_identifier(&self.table));
@@ -559,6 +633,7 @@ impl QueryBuilder {
         sql
     }
 
+    /// Convert an expression to SQL
     fn expr_to_sql<P: Platform>(&self, expr: &Expr, platform: &P) -> String {
         match expr {
             Expr::Column(name) => platform.quote_identifier(name),
@@ -620,6 +695,8 @@ impl QueryBuilder {
         }
     }
 
+    /// Convert a SQL value to its SQL representation
+    #[allow(clippy::unused_self)]
     fn value_to_sql(&self, value: &SqlValue) -> String {
         value.to_string()
     }

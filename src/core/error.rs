@@ -34,15 +34,20 @@ pub enum Error {
     /// Type conversion errors
     #[error("Conversion error: cannot convert {from_type} to {to_type}: {message}")]
     Conversion {
+        /// The source type name
         from_type: &'static str,
+        /// The target type name
         to_type: &'static str,
+        /// Error message describing why conversion failed
         message: String,
     },
 
     /// Driver-level errors (wraps underlying database driver errors)
     #[error("Driver error: {message}")]
     Driver {
+        /// Error message from the driver
         message: String,
+        /// Optional underlying error source
         #[source]
         source: Option<Box<dyn std::error::Error + Send + Sync>>,
     },
@@ -130,29 +135,42 @@ pub enum QueryError {
     /// SQL syntax error
     #[error("Syntax error: {message}")]
     Syntax {
+        /// Error message describing the syntax error
         message: String,
+        /// The SQL query that caused the error
         sql: Option<String>,
+        /// Position in the SQL where the error occurred
         position: Option<u32>,
     },
 
     /// Constraint violation (unique, foreign key, check, etc.)
     #[error("{constraint_type} constraint violation: {message}")]
     ConstraintViolation {
+        /// Type of constraint that was violated
         constraint_type: ConstraintType,
+        /// Name of the constraint that was violated
         constraint_name: Option<String>,
+        /// Error message describing the violation
         message: String,
     },
 
     /// Query execution failed
     #[error("Execution failed: {message}")]
     ExecutionFailed {
+        /// Error message describing the failure
         message: String,
+        /// The SQL query that failed
         sql: Option<String>,
     },
 
     /// Invalid parameter
     #[error("Invalid parameter '{name}': {message}")]
-    InvalidParameter { name: String, message: String },
+    InvalidParameter {
+        /// Name of the invalid parameter
+        name: String,
+        /// Error message describing why the parameter is invalid
+        message: String,
+    },
 
     /// Missing parameter
     #[error("Missing parameter: {0}")]
@@ -160,7 +178,12 @@ pub enum QueryError {
 
     /// Too many parameters
     #[error("Too many parameters: expected {expected}, got {actual}")]
-    TooManyParameters { expected: usize, actual: usize },
+    TooManyParameters {
+        /// Number of parameters expected
+        expected: usize,
+        /// Number of parameters provided
+        actual: usize,
+    },
 
     /// Query timeout
     #[error("Query timeout after {0}ms")]
@@ -214,7 +237,12 @@ pub enum SchemaError {
 
     /// Column not found
     #[error("Column not found: {table}.{column}")]
-    ColumnNotFound { table: String, column: String },
+    ColumnNotFound {
+        /// Table name where the column was not found
+        table: String,
+        /// Column name that was not found
+        column: String,
+    },
 
     /// Index not found
     #[error("Index not found: {0}")]
@@ -231,7 +259,9 @@ pub enum SchemaError {
     /// Schema object already exists
     #[error("{object_type} already exists: {name}")]
     AlreadyExists {
+        /// Type of schema object (e.g., "Table", "Index")
         object_type: &'static str,
+        /// Name of the object that already exists
         name: String,
     },
 
@@ -277,33 +307,36 @@ impl Error {
     }
 
     /// Check if this error is a connection error
-    pub fn is_connection_error(&self) -> bool {
+    #[must_use]
+    pub const fn is_connection_error(&self) -> bool {
         matches!(self, Self::Connection(_))
     }
 
     /// Check if this error is a transaction error
-    pub fn is_transaction_error(&self) -> bool {
+    #[must_use]
+    pub const fn is_transaction_error(&self) -> bool {
         matches!(self, Self::Transaction(_))
     }
 
     /// Check if this error is a constraint violation
-    pub fn is_constraint_violation(&self) -> bool {
+    #[must_use]
+    pub const fn is_constraint_violation(&self) -> bool {
         matches!(self, Self::Query(QueryError::ConstraintViolation { .. }))
     }
 
     /// Check if this error is a deadlock
-    pub fn is_deadlock(&self) -> bool {
+    #[must_use]
+    pub const fn is_deadlock(&self) -> bool {
         matches!(self, Self::Query(QueryError::Deadlock))
     }
 
     /// Check if this error indicates the operation can be retried
-    pub fn is_retryable(&self) -> bool {
+    #[must_use]
+    pub const fn is_retryable(&self) -> bool {
         matches!(
             self,
-            Self::Connection(ConnectionError::Lost)
-                | Self::Connection(ConnectionError::Timeout(_))
-                | Self::Query(QueryError::Deadlock)
-                | Self::Query(QueryError::Timeout(_))
+            Self::Connection(ConnectionError::Lost | ConnectionError::Timeout(_))
+                | Self::Query(QueryError::Deadlock | QueryError::Timeout(_))
         )
     }
 }

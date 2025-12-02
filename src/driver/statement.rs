@@ -12,9 +12,17 @@ pub trait DriverStatement: Send + Sync {
     type Result: DriverResult;
 
     /// Bind a parameter by position (0-indexed)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the position is invalid or binding fails.
     fn bind(&mut self, position: usize, value: SqlValue) -> Result<()>;
 
     /// Bind a parameter by name
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the name is not found or binding fails.
     fn bind_named(&mut self, name: &str, value: SqlValue) -> Result<()>;
 
     /// Execute the statement and return results

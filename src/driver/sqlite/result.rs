@@ -1,19 +1,24 @@
-//! SQLite result set implementation
+//! `SQLite` result set implementation
 
 use crate::core::{Result, SqlValue};
 use crate::driver::DriverResult;
 
-/// SQLite query result
+/// `SQLite` query result
+#[derive(Debug)]
 pub struct SqliteResult {
+    /// Result rows as vectors of SQL values
     rows: Vec<Vec<SqlValue>>,
+    /// Column names from the result set
     column_names: Vec<String>,
+    /// Number of rows affected by the query
     rows_affected: u64,
+    /// Current row index for iteration
     current_index: usize,
 }
 
 impl SqliteResult {
     /// Create a new result set
-    pub(crate) fn new(rows: Vec<Vec<SqlValue>>, column_names: Vec<String>, rows_affected: u64) -> Self {
+    pub(crate) const fn new(rows: Vec<Vec<SqlValue>>, column_names: Vec<String>, rows_affected: u64) -> Self {
         Self {
             rows,
             column_names,

@@ -7,8 +7,9 @@
 //!
 //! ## Available Drivers
 //!
-//! - `sqlite` - SQLite driver (requires `sqlite` feature)
+//! - `sqlite` - `SQLite` driver (requires `sqlite` feature)
 
+#[allow(clippy::module_inception)]
 pub mod driver;
 pub mod connection;
 pub mod statement;

@@ -45,8 +45,23 @@ pub struct Connection<D: Driver> {
     closed: AtomicBool,
 }
 
+impl<D: Driver> std::fmt::Debug for Connection<D> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Connection")
+            .field("nesting_level", &self.nesting_level.load(std::sync::atomic::Ordering::Relaxed))
+            .field("rollback_only", &self.rollback_only.load(std::sync::atomic::Ordering::Relaxed))
+            .field("isolation_level", &self.isolation_level)
+            .field("closed", &self.closed.load(std::sync::atomic::Ordering::Relaxed))
+            .finish_non_exhaustive()
+    }
+}
+
 impl<D: Driver> Connection<D> {
     /// Create a new connection using the given driver and parameters
+    ///
+    /// # Errors
+    ///
+    /// Returns a connection error if the database connection fails.
     pub async fn new(driver: &D, params: &ConnectionParams) -> Result<Self> {
         let inner = driver.connect(params).await?;
         Ok(Self {
@@ -70,7 +85,8 @@ impl<D: Driver> Connection<D> {
     }
 
     /// Get the underlying driver connection
-    pub fn inner(&self) -> &D::Connection {
+    #[must_use]
+    pub const fn inner(&self) -> &D::Connection {
         &self.inner
     }
 
@@ -79,18 +95,30 @@ impl<D: Driver> Connection<D> {
     // ========================================================================
 
     /// Execute a SQL query and return results
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the query fails or the connection is closed.
     pub async fn query(&self, sql: &str) -> Result<<D::Connection as DriverConnection>::Result> {
         self.ensure_not_closed()?;
         self.inner.query(sql).await
     }
 
     /// Execute a SQL statement and return affected rows
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the statement fails or the connection is closed.
     pub async fn execute(&self, sql: &str) -> Result<u64> {
         self.ensure_not_closed()?;
         self.inner.execute(sql).await
     }
 
     /// Prepare a SQL statement
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the statement preparation fails or the connection is closed.
     pub async fn prepare(
         &self,
         sql: &str,
@@ -107,6 +135,10 @@ impl<D: Driver> Connection<D> {
     ///
     /// If no transaction is active, starts a new transaction.
     /// If a transaction is already active, creates a savepoint for nested transaction.
+    ///
+    /// # Errors
+    ///
+    /// Returns a transaction error if the transaction cannot be started.
     pub async fn begin_transaction(&self) -> Result<()> {
         self.ensure_not_closed()?;
 
@@ -118,11 +150,10 @@ impl<D: Driver> Connection<D> {
         } else {
             // Create a savepoint for nested transaction
             let savepoint_name = self.savepoint_name(current_level);
-            let sql = format!("SAVEPOINT {}", savepoint_name);
+            let sql = format!("SAVEPOINT {savepoint_name}");
             self.inner.execute(&sql).await.map_err(|e| {
                 Error::Transaction(TransactionError::CommitFailed(format!(
-                    "Failed to create savepoint: {}",
-                    e
+                    "Failed to create savepoint: {e}"
                 )))
             })?;
         }
@@ -135,6 +166,10 @@ impl<D: Driver> Connection<D> {
     ///
     /// If at the outermost transaction level, commits the transaction.
     /// If in a nested transaction, releases the savepoint.
+    ///
+    /// # Errors
+    ///
+    /// Returns a transaction error if the commit fails or if marked for rollback only.
     pub async fn commit(&self) -> Result<()> {
         self.ensure_not_closed()?;
 
@@ -154,7 +189,7 @@ impl<D: Driver> Connection<D> {
         } else {
             // Release the savepoint (some databases like MySQL don't support this)
             let savepoint_name = self.savepoint_name(current_level - 1);
-            let sql = format!("RELEASE SAVEPOINT {}", savepoint_name);
+            let sql = format!("RELEASE SAVEPOINT {savepoint_name}");
             // Ignore errors for databases that don't support RELEASE SAVEPOINT
             let _ = self.inner.execute(&sql).await;
         }
@@ -173,6 +208,10 @@ impl<D: Driver> Connection<D> {
     ///
     /// If at the outermost transaction level, rolls back the entire transaction.
     /// If in a nested transaction, rolls back to the savepoint.
+    ///
+    /// # Errors
+    ///
+    /// Returns a transaction error if no transaction is active or the rollback fails.
     pub async fn rollback(&self) -> Result<()> {
         self.ensure_not_closed()?;
 
@@ -188,11 +227,10 @@ impl<D: Driver> Connection<D> {
         } else {
             // Rollback to the savepoint
             let savepoint_name = self.savepoint_name(current_level - 1);
-            let sql = format!("ROLLBACK TO SAVEPOINT {}", savepoint_name);
+            let sql = format!("ROLLBACK TO SAVEPOINT {savepoint_name}");
             self.inner.execute(&sql).await.map_err(|e| {
                 Error::Transaction(TransactionError::RollbackFailed(format!(
-                    "Failed to rollback to savepoint: {}",
-                    e
+                    "Failed to rollback to savepoint: {e}"
                 )))
             })?;
         }
@@ -225,6 +263,10 @@ impl<D: Driver> Connection<D> {
     /// })).await?;
     /// assert_eq!(result, 2);
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if beginning, committing, or the inner future fails.
     pub async fn transactional_boxed<T>(
         &self,
         fut: std::pin::Pin<Box<dyn Future<Output = Result<T>> + Send + '_>>,
@@ -260,6 +302,10 @@ impl<D: Driver> Connection<D> {
     ///     Err(e) => { conn.rollback().await?; return Err(e); }
     /// }
     /// ```
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the result is an error or if commit fails.
     pub async fn in_transaction<T, E>(&self, result: std::result::Result<T, E>) -> Result<T>
     where
         E: Into<Error>,
@@ -284,7 +330,8 @@ impl<D: Driver> Connection<D> {
     }
 
     /// Get the current isolation level setting
-    pub fn transaction_isolation(&self) -> IsolationLevel {
+    #[must_use]
+    pub const fn transaction_isolation(&self) -> IsolationLevel {
         self.isolation_level
     }
 
@@ -326,6 +373,10 @@ impl<D: Driver> Connection<D> {
     }
 
     /// Get the server version string
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the connection is closed or version query fails.
     pub async fn server_version(&self) -> Result<String> {
         self.ensure_not_closed()?;
         self.inner.server_version().await
@@ -334,6 +385,10 @@ impl<D: Driver> Connection<D> {
     /// Close the connection
     ///
     /// If a transaction is active, it will be rolled back first.
+    ///
+    /// # Errors
+    ///
+    /// This method currently does not fail, but returns `Result` for future compatibility.
     pub async fn close(&self) -> Result<()> {
         if self.closed.swap(true, Ordering::SeqCst) {
             return Ok(()); // Already closed
@@ -357,8 +412,9 @@ impl<D: Driver> Connection<D> {
     // ========================================================================
 
     /// Generate a savepoint name for the given nesting level
+    #[allow(clippy::unused_self)]
     fn savepoint_name(&self, level: u32) -> String {
-        format!("RUSTINE_{}", level)
+        format!("RUSTINE_{level}")
     }
 
     /// Ensure the connection is not closed

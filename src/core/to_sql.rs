@@ -1,4 +1,4 @@
-//! ToSql trait for converting Rust types to SQL values
+//! `ToSql` trait for converting Rust types to SQL values
 //!
 //! This trait enables any Rust type to be converted into a [`SqlValue`]
 //! for use in query parameters.
@@ -27,6 +27,10 @@ use super::{Result, SqlValue};
 /// ```
 pub trait ToSql {
     /// Convert this value to a SQL value
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the conversion fails (e.g., unsupported type).
     fn to_sql(&self) -> Result<SqlValue>;
 }
 
@@ -186,29 +190,37 @@ impl ToSql for rust_decimal::Decimal {
     }
 }
 
-/// Extension trait for converting iterables of ToSql items to Vec<SqlValue>
+/// Extension trait for converting iterables of `ToSql` items to `Vec<SqlValue>`
 pub trait ToSqlVec {
     /// Convert to a vector of SQL values
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any element fails to convert.
     fn to_sql_vec(&self) -> Result<Vec<SqlValue>>;
 }
 
 impl<T: ToSql> ToSqlVec for [T] {
     fn to_sql_vec(&self) -> Result<Vec<SqlValue>> {
-        self.iter().map(|v| v.to_sql()).collect()
+        self.iter().map(ToSql::to_sql).collect()
     }
 }
 
 impl<T: ToSql> ToSqlVec for Vec<T> {
     fn to_sql_vec(&self) -> Result<Vec<SqlValue>> {
-        self.iter().map(|v| v.to_sql()).collect()
+        self.iter().map(ToSql::to_sql).collect()
     }
 }
 
-/// Trait object safe version of ToSql
+/// Trait object safe version of `ToSql`
 ///
 /// This allows storing heterogeneous parameter types in collections.
 pub trait DynToSql: Send + Sync {
     /// Convert to a SQL value (boxed version for trait objects)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the conversion fails.
     fn to_sql_dyn(&self) -> Result<SqlValue>;
 }
 

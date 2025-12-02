@@ -9,6 +9,7 @@
 //! - Transactional closure API
 //! - Isolation level management
 
+#[allow(clippy::module_inception)]
 mod connection;
 mod transaction;
 

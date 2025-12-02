@@ -28,7 +28,7 @@ pub struct ConnectionParams {
     /// Unix socket path (alternative to host/port)
     pub socket: Option<String>,
 
-    /// Path to database file (for SQLite)
+    /// Path to database file (for `SQLite`)
     pub path: Option<String>,
 
     /// Additional driver-specific options
@@ -37,6 +37,7 @@ pub struct ConnectionParams {
 
 impl ConnectionParams {
     /// Create new connection parameters with driver type
+    #[must_use]
     pub fn new(driver: impl Into<String>) -> Self {
         Self {
             driver: driver.into(),
@@ -51,81 +52,97 @@ impl ConnectionParams {
         }
     }
 
-    /// Create connection parameters for PostgreSQL
+    /// Create connection parameters for `PostgreSQL`
+    #[must_use]
     pub fn postgres() -> Self {
         Self::new("postgres").with_port(5432)
     }
 
-    /// Create connection parameters for MySQL
+    /// Create connection parameters for `MySQL`
+    #[must_use]
     pub fn mysql() -> Self {
         Self::new("mysql").with_port(3306)
     }
 
-    /// Create connection parameters for SQLite
+    /// Create connection parameters for `SQLite`
+    #[must_use]
     pub fn sqlite() -> Self {
         Self::new("sqlite")
     }
 
-    /// Create connection parameters for SQLite in-memory database
+    /// Create connection parameters for `SQLite` in-memory database
+    #[must_use]
     pub fn sqlite_memory() -> Self {
         Self::new("sqlite").with_path(":memory:")
     }
 
     /// Set host
+    #[must_use]
     pub fn with_host(mut self, host: impl Into<String>) -> Self {
         self.host = Some(host.into());
         self
     }
 
     /// Set port
-    pub fn with_port(mut self, port: u16) -> Self {
+    #[must_use]
+    pub const fn with_port(mut self, port: u16) -> Self {
         self.port = Some(port);
         self
     }
 
     /// Set database name
+    #[must_use]
     pub fn with_database(mut self, database: impl Into<String>) -> Self {
         self.database = Some(database.into());
         self
     }
 
     /// Set username
+    #[must_use]
     pub fn with_username(mut self, username: impl Into<String>) -> Self {
         self.username = Some(username.into());
         self
     }
 
     /// Set password
+    #[must_use]
     pub fn with_password(mut self, password: impl Into<String>) -> Self {
         self.password = Some(password.into());
         self
     }
 
     /// Set Unix socket path
+    #[must_use]
     pub fn with_socket(mut self, socket: impl Into<String>) -> Self {
         self.socket = Some(socket.into());
         self
     }
 
-    /// Set file path (for SQLite)
+    /// Set file path (for `SQLite`)
+    #[must_use]
     pub fn with_path(mut self, path: impl Into<String>) -> Self {
         self.path = Some(path.into());
         self
     }
 
     /// Set a driver-specific option
+    #[must_use]
     pub fn with_option(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.options.insert(key.into(), value.into());
         self
     }
 
-    /// Parse a connection URL into ConnectionParams
+    /// Parse a connection URL into `ConnectionParams`
     ///
     /// Supported formats:
     /// - `postgres://user:pass@host:port/database`
     /// - `mysql://user:pass@host:port/database`
     /// - `sqlite:///path/to/database.db`
     /// - `sqlite::memory:` or `sqlite://:memory:`
+    ///
+    /// # Errors
+    ///
+    /// Returns a configuration error if the URL format is invalid.
     pub fn from_url(url: &str) -> crate::Result<Self> {
         // Handle SQLite special shorthand format "sqlite::memory:"
         if url == "sqlite::memory:" {
@@ -197,6 +214,7 @@ impl ConnectionParams {
     }
 
     /// Convert to a connection URL string
+    #[must_use]
     pub fn to_url(&self) -> String {
         let mut url = format!("{}://", self.driver);
 
@@ -287,93 +305,109 @@ pub struct Configuration {
 
 impl Configuration {
     /// Create a new configuration with default values
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Set auto-commit mode
-    pub fn with_auto_commit(mut self, auto_commit: bool) -> Self {
+    #[must_use]
+    pub const fn with_auto_commit(mut self, auto_commit: bool) -> Self {
         self.auto_commit = auto_commit;
         self
     }
 
     /// Set connection timeout
-    pub fn with_connect_timeout(mut self, timeout: Duration) -> Self {
+    #[must_use]
+    pub const fn with_connect_timeout(mut self, timeout: Duration) -> Self {
         self.connect_timeout = Some(timeout);
         self
     }
 
     /// Set query timeout
-    pub fn with_query_timeout(mut self, timeout: Duration) -> Self {
+    #[must_use]
+    pub const fn with_query_timeout(mut self, timeout: Duration) -> Self {
         self.query_timeout = Some(timeout);
         self
     }
 
     /// Set lazy connection mode
-    pub fn with_lazy_connect(mut self, lazy: bool) -> Self {
+    #[must_use]
+    pub const fn with_lazy_connect(mut self, lazy: bool) -> Self {
         self.lazy_connect = lazy;
         self
     }
 
     /// Set schema/search path
+    #[must_use]
     pub fn with_schema(mut self, schema: impl Into<String>) -> Self {
         self.schema = Some(schema.into());
         self
     }
 
     /// Set character set
+    #[must_use]
     pub fn with_charset(mut self, charset: impl Into<String>) -> Self {
         self.charset = Some(charset.into());
         self
     }
 
     /// Set timezone
+    #[must_use]
     pub fn with_timezone(mut self, timezone: impl Into<String>) -> Self {
         self.timezone = Some(timezone.into());
         self
     }
 
     /// Set application name
+    #[must_use]
     pub fn with_application_name(mut self, name: impl Into<String>) -> Self {
         self.application_name = Some(name.into());
         self
     }
 
     /// Enable query logging
-    pub fn with_logging(mut self, enable: bool) -> Self {
+    #[must_use]
+    pub const fn with_logging(mut self, enable: bool) -> Self {
         self.enable_logging = enable;
         self
     }
 
     /// Set custom datetime format
+    #[must_use]
     pub fn with_datetime_format(mut self, format: impl Into<String>) -> Self {
         self.datetime_format = Some(format.into());
         self
     }
 
     /// Set custom date format
+    #[must_use]
     pub fn with_date_format(mut self, format: impl Into<String>) -> Self {
         self.date_format = Some(format.into());
         self
     }
 
     /// Set custom time format
+    #[must_use]
     pub fn with_time_format(mut self, format: impl Into<String>) -> Self {
         self.time_format = Some(format.into());
         self
     }
 
     /// Get datetime format (returns default if not set)
+    #[must_use]
     pub fn datetime_format(&self) -> &str {
         self.datetime_format.as_deref().unwrap_or("%Y-%m-%d %H:%M:%S")
     }
 
     /// Get date format (returns default if not set)
+    #[must_use]
     pub fn date_format(&self) -> &str {
         self.date_format.as_deref().unwrap_or("%Y-%m-%d")
     }
 
     /// Get time format (returns default if not set)
+    #[must_use]
     pub fn time_format(&self) -> &str {
         self.time_format.as_deref().unwrap_or("%H:%M:%S")
     }
@@ -417,7 +451,8 @@ pub enum IsolationLevel {
 
 impl IsolationLevel {
     /// Get the SQL representation of this isolation level
-    pub fn as_sql(&self) -> &'static str {
+    #[must_use]
+    pub const fn as_sql(&self) -> &'static str {
         match self {
             Self::ReadUncommitted => "READ UNCOMMITTED",
             Self::ReadCommitted => "READ COMMITTED",

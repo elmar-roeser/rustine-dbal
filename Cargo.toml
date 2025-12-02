@@ -71,3 +71,70 @@ tracing = ["dep:tracing"]
 
 # Database drivers
 sqlite = ["dep:sqlx", "dep:tokio"]
+
+# ============================================================================
+# Lints Configuration
+# ============================================================================
+
+[lints.rust]
+# --- Safety ---
+unsafe_code = "deny"
+
+# --- Compatibility ---
+future_incompatible = { level = "deny", priority = 1 }
+
+# --- Dependencies ---
+unused_crate_dependencies = "allow"
+
+# --- Code Hygiene ---
+dead_code = "warn"
+unused_imports = "warn"
+explicit_outlives_requirements = "warn"
+macro_use_extern_crate = "warn"
+
+# --- Documentation ---
+missing_docs = "warn"
+
+# --- Debuggability ---
+missing_debug_implementations = "warn"
+
+[lints.clippy]
+# --- Group Settings ---
+cargo = "warn"
+complexity = "warn"
+correctness = "deny"
+pedantic = "warn"
+perf = "warn"
+style = "warn"
+
+# --- Safety & Robustness ---
+expect_used = { level = "deny", priority = 1 }
+large_stack_arrays = { level = "warn", priority = 1 }
+panic = { level = "warn", priority = 1 }
+unwrap_used = { level = "deny", priority = 1 }
+
+# --- Dependencies & Imports ---
+enum_glob_use = { level = "deny", priority = 1 }
+multiple_crate_versions = { level = "allow", priority = 1 }
+wildcard_imports = { level = "deny", priority = 1 }
+
+# --- Code Hygiene & Process ---
+dbg_macro = { level = "deny", priority = 1 }
+redundant_pub_crate = { level = "warn", priority = 1 }
+todo = { level = "deny", priority = 1 }
+unnecessary_wraps = { level = "deny", priority = 1 }
+
+# --- Code Layout & Complexity ---
+too_many_lines = { level = "warn", priority = 1 }
+
+# --- Performance ---
+box_collection = { level = "deny", priority = 1 }
+missing_const_for_fn = { level = "deny", priority = 1 }
+
+# --- Documentation ---
+missing_docs_in_private_items = { level = "warn", priority = 1 }
+missing_errors_doc = { level = "warn", priority = 1 }
+missing_panics_doc = { level = "warn", priority = 1 }
+
+# --- Style & Readability ---
+use_self = { level = "warn", priority = 1 }

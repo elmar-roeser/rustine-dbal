@@ -6,18 +6,22 @@ use crate::platform::{ForeignKeyAction, Index, Platform, Table};
 
 /// Schema Manager for introspecting and manipulating database schemas
 ///
-/// The SchemaManager provides methods to:
+/// The `SchemaManager` provides methods to:
 /// - List tables, columns, indexes, and foreign keys
 /// - Create and drop tables
 /// - Create and drop indexes
+#[derive(Debug)]
 pub struct SchemaManager<'a, C: DriverConnection, P: Platform> {
+    /// Database connection for executing schema queries
     connection: &'a C,
+    /// Platform for generating SQL
     platform: &'a P,
 }
 
 impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
-    /// Create a new SchemaManager
-    pub fn new(connection: &'a C, platform: &'a P) -> Self {
+    /// Create a new `SchemaManager`
+    #[must_use]
+    pub const fn new(connection: &'a C, platform: &'a P) -> Self {
         Self {
             connection,
             platform,
@@ -25,6 +29,10 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
     }
 
     /// List all table names in the database
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the query fails.
     pub async fn list_table_names(&self) -> Result<Vec<String>> {
         let sql = self.platform.get_list_tables_sql();
         let mut result = self.connection.query(sql).await?;
@@ -41,6 +49,10 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
     }
 
     /// List all columns of a table
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the query fails.
     pub async fn list_table_columns(&self, table_name: &str) -> Result<Vec<ColumnInfo>> {
         let sql = self.platform.get_list_columns_sql(table_name);
         let mut result = self.connection.query(&sql).await?;
@@ -57,6 +69,10 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
     }
 
     /// List all indexes of a table
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the query fails.
     pub async fn list_table_indexes(&self, table_name: &str) -> Result<Vec<IndexInfo>> {
         let sql = self.platform.get_list_indexes_sql(table_name);
         let mut result = self.connection.query(&sql).await?;
@@ -73,6 +89,10 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
     }
 
     /// List all foreign keys of a table
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the query fails.
     pub async fn list_table_foreign_keys(&self, table_name: &str) -> Result<Vec<ForeignKeyInfo>> {
         let sql = self.platform.get_list_foreign_keys_sql(table_name);
         let mut result = self.connection.query(&sql).await?;
@@ -89,12 +109,20 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
     }
 
     /// Check if a table exists
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if listing tables fails.
     pub async fn table_exists(&self, table_name: &str) -> Result<bool> {
         let tables = self.list_table_names().await?;
         Ok(tables.iter().any(|t| t.eq_ignore_ascii_case(table_name)))
     }
 
     /// Get full table information including columns, indexes, and foreign keys
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any introspection query fails.
     pub async fn introspect_table(&self, table_name: &str) -> Result<TableInfo> {
         let columns = self.list_table_columns(table_name).await?;
         let indexes = self.list_table_indexes(table_name).await?;
@@ -109,6 +137,10 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
     }
 
     /// Create a table from a Table definition
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the CREATE TABLE statement fails.
     pub async fn create_table(&self, table: &Table) -> Result<()> {
         let sql = self.platform.get_create_table_sql(table);
         self.connection.execute(&sql).await?;
@@ -116,6 +148,10 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
     }
 
     /// Drop a table
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the DROP TABLE statement fails.
     pub async fn drop_table(&self, table_name: &str) -> Result<()> {
         let sql = self.platform.get_drop_table_sql(table_name);
         self.connection.execute(&sql).await?;
@@ -123,6 +159,10 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
     }
 
     /// Drop a table if it exists
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the DROP TABLE IF EXISTS statement fails.
     pub async fn drop_table_if_exists(&self, table_name: &str) -> Result<()> {
         let sql = self.platform.get_drop_table_if_exists_sql(table_name);
         self.connection.execute(&sql).await?;
@@ -130,6 +170,10 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
     }
 
     /// Create an index
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the CREATE INDEX statement fails.
     pub async fn create_index(&self, table_name: &str, index: &Index) -> Result<()> {
         let sql = self.platform.get_create_index_sql(table_name, index);
         self.connection.execute(&sql).await?;
@@ -137,6 +181,10 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
     }
 
     /// Drop an index
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the DROP INDEX statement fails.
     pub async fn drop_index(&self, index_name: &str, table_name: &str) -> Result<()> {
         let sql = self.platform.get_drop_index_sql(index_name, table_name);
         self.connection.execute(&sql).await?;
@@ -147,6 +195,7 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
     // Platform-specific row parsing
     // ========================================================================
 
+    /// Parse a column metadata row from the database
     fn parse_column_row(&self, row: &[SqlValue]) -> Option<ColumnInfo> {
         // The row format depends on the platform, but we try to handle common cases
         // PostgreSQL/MySQL: column_name, data_type, is_nullable, column_default, ...
@@ -160,11 +209,12 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
 
         match platform_name {
             "sqlite" => self.parse_sqlite_column_row(row),
-            "postgresql" | "mysql" => self.parse_standard_column_row(row),
             _ => self.parse_standard_column_row(row),
         }
     }
 
+    /// Parse a `SQLite` `PRAGMA` `table_info` row
+    #[allow(clippy::unused_self)]
     fn parse_sqlite_column_row(&self, row: &[SqlValue]) -> Option<ColumnInfo> {
         // SQLite PRAGMA table_info returns: cid, name, type, notnull, dflt_value, pk
         if row.len() < 6 {
@@ -190,7 +240,6 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
 
         let default = match &row[4] {
             SqlValue::String(s) if !s.is_empty() => Some(s.clone()),
-            SqlValue::Null => None,
             _ => None,
         };
 
@@ -216,6 +265,8 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
         })
     }
 
+    /// Parse a standard `information_schema` column row
+    #[allow(clippy::unused_self)]
     fn parse_standard_column_row(&self, row: &[SqlValue]) -> Option<ColumnInfo> {
         // Standard information_schema format: column_name, data_type, is_nullable, column_default, ...
         if row.is_empty() {
@@ -249,7 +300,6 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
         let default = if row.len() > 3 {
             match &row[3] {
                 SqlValue::String(s) if !s.is_empty() => Some(s.clone()),
-                SqlValue::Null => None,
                 _ => None,
             }
         } else {
@@ -266,6 +316,7 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
         })
     }
 
+    /// Parse an index metadata row from the database
     fn parse_index_row(&self, row: &[SqlValue]) -> Option<IndexInfo> {
         if row.is_empty() {
             return None;
@@ -279,6 +330,8 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
         }
     }
 
+    /// Parse a `SQLite` `PRAGMA` `index_list` row
+    #[allow(clippy::unused_self)]
     fn parse_sqlite_index_row(&self, row: &[SqlValue]) -> Option<IndexInfo> {
         // SQLite PRAGMA index_list returns: seq, name, unique, origin, partial
         if row.len() < 3 {
@@ -314,6 +367,8 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
         })
     }
 
+    /// Parse a standard `information_schema` index row
+    #[allow(clippy::unused_self)]
     fn parse_standard_index_row(&self, row: &[SqlValue]) -> Option<IndexInfo> {
         if row.is_empty() {
             return None;
@@ -363,6 +418,7 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
         })
     }
 
+    /// Parse a foreign key metadata row from the database
     fn parse_foreign_key_row(&self, row: &[SqlValue]) -> Option<ForeignKeyInfo> {
         if row.is_empty() {
             return None;
@@ -376,6 +432,7 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
         }
     }
 
+    /// Parse a `SQLite` `PRAGMA` `foreign_key_list` row
     fn parse_sqlite_foreign_key_row(&self, row: &[SqlValue]) -> Option<ForeignKeyInfo> {
         // SQLite PRAGMA foreign_key_list returns: id, seq, table, from, to, on_update, on_delete, match
         if row.len() < 5 {
@@ -419,6 +476,8 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
         })
     }
 
+    /// Parse a standard `information_schema` foreign key row
+    #[allow(clippy::unused_self)]
     fn parse_standard_foreign_key_row(&self, row: &[SqlValue]) -> Option<ForeignKeyInfo> {
         // Standard: constraint_name, column_name, foreign_table_name, foreign_column_name
         if row.len() < 4 {
@@ -455,6 +514,8 @@ impl<'a, C: DriverConnection, P: Platform> SchemaManager<'a, C, P> {
         })
     }
 
+    /// Parse a foreign key action from a SQL value
+    #[allow(clippy::unused_self)]
     fn parse_fk_action(&self, value: &SqlValue) -> ForeignKeyAction {
         match value {
             SqlValue::String(s) => match s.to_uppercase().as_str() {
@@ -531,6 +592,7 @@ pub struct TableInfo {
 
 impl TableInfo {
     /// Get the primary key columns
+    #[must_use]
     pub fn primary_key_columns(&self) -> Vec<&str> {
         self.columns
             .iter()
@@ -540,11 +602,13 @@ impl TableInfo {
     }
 
     /// Check if the table has a specific column
+    #[must_use]
     pub fn has_column(&self, name: &str) -> bool {
         self.columns.iter().any(|c| c.name.eq_ignore_ascii_case(name))
     }
 
     /// Get column by name
+    #[must_use]
     pub fn get_column(&self, name: &str) -> Option<&ColumnInfo> {
         self.columns.iter().find(|c| c.name.eq_ignore_ascii_case(name))
     }

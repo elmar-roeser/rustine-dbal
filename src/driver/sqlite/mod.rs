@@ -1,6 +1,6 @@
-//! SQLite driver implementation
+//! `SQLite` driver implementation
 //!
-//! This module provides SQLite database connectivity using sqlx.
+//! This module provides `SQLite` database connectivity using sqlx.
 
 mod driver;
 mod connection;

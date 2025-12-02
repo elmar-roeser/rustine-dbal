@@ -10,9 +10,10 @@ use super::ParameterType;
 /// This is the intermediate representation used when converting between
 /// Rust types and database types. It provides a unified interface for
 /// handling all SQL values regardless of the underlying database platform.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub enum SqlValue {
     /// SQL NULL value
+    #[default]
     Null,
 
     /// Boolean value
@@ -56,11 +57,11 @@ pub enum SqlValue {
     #[cfg(feature = "chrono")]
     Time(chrono::NaiveTime),
 
-    /// DateTime value without timezone
+    /// `DateTime` value without timezone
     #[cfg(feature = "chrono")]
     DateTime(chrono::NaiveDateTime),
 
-    /// DateTime value with UTC timezone
+    /// `DateTime` value with UTC timezone
     #[cfg(feature = "chrono")]
     DateTimeUtc(chrono::DateTime<chrono::Utc>),
 
@@ -79,12 +80,14 @@ pub enum SqlValue {
 
 impl SqlValue {
     /// Check if this value is NULL
-    pub fn is_null(&self) -> bool {
+    #[must_use]
+    pub const fn is_null(&self) -> bool {
         matches!(self, Self::Null)
     }
 
     /// Get the parameter type for this value
-    pub fn param_type(&self) -> ParameterType {
+    #[must_use]
+    pub const fn param_type(&self) -> ParameterType {
         match self {
             Self::Null => ParameterType::Null,
             Self::Bool(_) => ParameterType::Boolean,
@@ -107,7 +110,8 @@ impl SqlValue {
     }
 
     /// Try to get as bool
-    pub fn as_bool(&self) -> Option<bool> {
+    #[must_use]
+    pub const fn as_bool(&self) -> Option<bool> {
         match self {
             Self::Bool(b) => Some(*b),
             Self::I8(i) => Some(*i != 0),
@@ -119,43 +123,48 @@ impl SqlValue {
     }
 
     /// Try to get as i32
+    #[must_use]
     pub fn as_i32(&self) -> Option<i32> {
         match self {
-            Self::I8(i) => Some(*i as i32),
-            Self::I16(i) => Some(*i as i32),
+            Self::I8(i) => Some(i32::from(*i)),
+            Self::I16(i) => Some(i32::from(*i)),
             Self::I32(i) => Some(*i),
-            Self::Bool(b) => Some(if *b { 1 } else { 0 }),
+            Self::Bool(b) => Some(i32::from(*b)),
             _ => None,
         }
     }
 
     /// Try to get as i64
+    #[must_use]
     pub fn as_i64(&self) -> Option<i64> {
         match self {
-            Self::I8(i) => Some(*i as i64),
-            Self::I16(i) => Some(*i as i64),
-            Self::I32(i) => Some(*i as i64),
+            Self::I8(i) => Some(i64::from(*i)),
+            Self::I16(i) => Some(i64::from(*i)),
+            Self::I32(i) => Some(i64::from(*i)),
             Self::I64(i) => Some(*i),
-            Self::U32(u) => Some(*u as i64),
-            Self::Bool(b) => Some(if *b { 1 } else { 0 }),
+            Self::U32(u) => Some(i64::from(*u)),
+            Self::Bool(b) => Some(i64::from(*b)),
             _ => None,
         }
     }
 
     /// Try to get as f64
+    #[allow(clippy::cast_precision_loss)]
+    #[must_use]
     pub fn as_f64(&self) -> Option<f64> {
         match self {
-            Self::F32(f) => Some(*f as f64),
+            Self::F32(f) => Some(f64::from(*f)),
             Self::F64(f) => Some(*f),
-            Self::I8(i) => Some(*i as f64),
-            Self::I16(i) => Some(*i as f64),
-            Self::I32(i) => Some(*i as f64),
+            Self::I8(i) => Some(f64::from(*i)),
+            Self::I16(i) => Some(f64::from(*i)),
+            Self::I32(i) => Some(f64::from(*i)),
             Self::I64(i) => Some(*i as f64),
             _ => None,
         }
     }
 
     /// Try to get as string reference
+    #[must_use]
     pub fn as_str(&self) -> Option<&str> {
         match self {
             Self::String(s) => Some(s),
@@ -164,6 +173,7 @@ impl SqlValue {
     }
 
     /// Try to get as bytes reference
+    #[must_use]
     pub fn as_bytes(&self) -> Option<&[u8]> {
         match self {
             Self::Bytes(b) => Some(b),
@@ -173,6 +183,7 @@ impl SqlValue {
     }
 
     /// Convert to String representation
+    #[must_use]
     pub fn into_string(self) -> Option<String> {
         match self {
             Self::String(s) => Some(s),
@@ -195,7 +206,8 @@ impl SqlValue {
 
     /// Get as UUID
     #[cfg(feature = "uuid")]
-    pub fn as_uuid(&self) -> Option<&uuid::Uuid> {
+    #[must_use]
+    pub const fn as_uuid(&self) -> Option<&uuid::Uuid> {
         match self {
             Self::Uuid(u) => Some(u),
             _ => None,
@@ -204,34 +216,38 @@ impl SqlValue {
 
     /// Get as JSON value
     #[cfg(feature = "json")]
-    pub fn as_json(&self) -> Option<&serde_json::Value> {
+    #[must_use]
+    pub const fn as_json(&self) -> Option<&serde_json::Value> {
         match self {
             Self::Json(j) => Some(j),
             _ => None,
         }
     }
 
-    /// Get as NaiveDate
+    /// Get as `NaiveDate`
     #[cfg(feature = "chrono")]
-    pub fn as_date(&self) -> Option<&chrono::NaiveDate> {
+    #[must_use]
+    pub const fn as_date(&self) -> Option<&chrono::NaiveDate> {
         match self {
             Self::Date(d) => Some(d),
             _ => None,
         }
     }
 
-    /// Get as NaiveTime
+    /// Get as `NaiveTime`
     #[cfg(feature = "chrono")]
-    pub fn as_time(&self) -> Option<&chrono::NaiveTime> {
+    #[must_use]
+    pub const fn as_time(&self) -> Option<&chrono::NaiveTime> {
         match self {
             Self::Time(t) => Some(t),
             _ => None,
         }
     }
 
-    /// Get as NaiveDateTime
+    /// Get as `NaiveDateTime`
     #[cfg(feature = "chrono")]
-    pub fn as_datetime(&self) -> Option<&chrono::NaiveDateTime> {
+    #[must_use]
+    pub const fn as_datetime(&self) -> Option<&chrono::NaiveDateTime> {
         match self {
             Self::DateTime(dt) => Some(dt),
             _ => None,
@@ -240,7 +256,8 @@ impl SqlValue {
 
     /// Get as Decimal
     #[cfg(feature = "decimal")]
-    pub fn as_decimal(&self) -> Option<&rust_decimal::Decimal> {
+    #[must_use]
+    pub const fn as_decimal(&self) -> Option<&rust_decimal::Decimal> {
         match self {
             Self::Decimal(d) => Some(d),
             _ => None,
@@ -248,48 +265,46 @@ impl SqlValue {
     }
 }
 
-impl Default for SqlValue {
-    fn default() -> Self {
-        Self::Null
-    }
-}
-
 impl std::fmt::Display for SqlValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Null => write!(f, "NULL"),
-            Self::Bool(b) => write!(f, "{}", b),
-            Self::I8(i) => write!(f, "{}", i),
-            Self::I16(i) => write!(f, "{}", i),
-            Self::I32(i) => write!(f, "{}", i),
-            Self::I64(i) => write!(f, "{}", i),
-            Self::U32(u) => write!(f, "{}", u),
-            Self::U64(u) => write!(f, "{}", u),
-            Self::F32(n) => write!(f, "{}", n),
-            Self::F64(n) => write!(f, "{}", n),
+            Self::Bool(b) => write!(f, "{b}"),
+            Self::I8(i) => write!(f, "{i}"),
+            Self::I16(i) => write!(f, "{i}"),
+            Self::I32(i) => write!(f, "{i}"),
+            Self::I64(i) => write!(f, "{i}"),
+            Self::U32(u) => write!(f, "{u}"),
+            Self::U64(u) => write!(f, "{u}"),
+            Self::F32(n) => write!(f, "{n}"),
+            Self::F64(n) => write!(f, "{n}"),
             Self::String(s) => write!(f, "'{}'", s.replace('\'', "''")),
             Self::Bytes(b) => write!(f, "0x{}", hex_encode(b)),
             #[cfg(feature = "chrono")]
-            Self::Date(d) => write!(f, "'{}'", d),
+            Self::Date(d) => write!(f, "'{d}'"),
             #[cfg(feature = "chrono")]
-            Self::Time(t) => write!(f, "'{}'", t),
+            Self::Time(t) => write!(f, "'{t}'"),
             #[cfg(feature = "chrono")]
-            Self::DateTime(dt) => write!(f, "'{}'", dt),
+            Self::DateTime(dt) => write!(f, "'{dt}'"),
             #[cfg(feature = "chrono")]
-            Self::DateTimeUtc(dt) => write!(f, "'{}'", dt),
+            Self::DateTimeUtc(dt) => write!(f, "'{dt}'"),
             #[cfg(feature = "uuid")]
-            Self::Uuid(u) => write!(f, "'{}'", u),
+            Self::Uuid(u) => write!(f, "'{u}'"),
             #[cfg(feature = "json")]
-            Self::Json(j) => write!(f, "'{}'", j),
+            Self::Json(j) => write!(f, "'{j}'"),
             #[cfg(feature = "decimal")]
-            Self::Decimal(d) => write!(f, "{}", d),
+            Self::Decimal(d) => write!(f, "{d}"),
         }
     }
 }
 
 /// Simple hex encoding for bytes display
 fn hex_encode(bytes: &[u8]) -> String {
-    bytes.iter().map(|b| format!("{:02x}", b)).collect()
+    use std::fmt::Write;
+    bytes.iter().fold(String::with_capacity(bytes.len() * 2), |mut acc, b| {
+        let _ = write!(acc, "{b:02x}");
+        acc
+    })
 }
 
 // Convenient From implementations
@@ -373,7 +388,7 @@ impl From<&[u8]> for SqlValue {
 
 impl<T> From<Option<T>> for SqlValue
 where
-    T: Into<SqlValue>,
+    T: Into<Self>,
 {
     fn from(value: Option<T>) -> Self {
         match value {

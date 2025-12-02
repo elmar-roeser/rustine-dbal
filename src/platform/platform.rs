@@ -13,7 +13,7 @@ pub trait Platform: Send + Sync {
     /// Quote an identifier (table name, column name, etc.)
     fn quote_identifier(&self, identifier: &str) -> String {
         let quote = self.quote_identifier_char();
-        format!("{}{}{}", quote, identifier.replace(quote, &format!("{}{}", quote, quote)), quote)
+        format!("{quote}{}{quote}", identifier.replace(quote, &format!("{quote}{quote}")))
     }
 
     /// Quote a string literal
@@ -23,12 +23,13 @@ pub trait Platform: Send + Sync {
 
     /// Get the SQL for LIMIT/OFFSET
     fn limit_offset_sql(&self, limit: Option<u64>, offset: Option<u64>) -> String {
+        use std::fmt::Write;
         let mut sql = String::new();
         if let Some(limit) = limit {
-            sql.push_str(&format!(" LIMIT {}", limit));
+            let _ = write!(sql, " LIMIT {limit}");
         }
         if let Some(offset) = offset {
-            sql.push_str(&format!(" OFFSET {}", offset));
+            let _ = write!(sql, " OFFSET {offset}");
         }
         sql
     }
@@ -95,7 +96,7 @@ pub trait Platform: Send + Sync {
     // Type Mapping
     // ========================================================================
 
-    /// Get the SQL type name for a given SqlType
+    /// Get the SQL type name for a given `SqlType`
     fn get_type_declaration(&self, sql_type: &SqlType) -> String;
 
     /// Get the SQL for a column definition
@@ -124,6 +125,7 @@ pub trait Platform: Send + Sync {
 
     /// Generate CREATE TABLE SQL
     fn get_create_table_sql(&self, table: &Table) -> String {
+        use std::fmt::Write;
         let mut sql = format!("CREATE TABLE {} (\n", self.quote_identifier(&table.name));
 
         // Columns
@@ -140,7 +142,7 @@ pub trait Platform: Send + Sync {
                 .iter()
                 .map(|c| self.quote_identifier(c))
                 .collect();
-            sql.push_str(&format!(",\n    PRIMARY KEY ({})", pk_col_names.join(", ")));
+            let _ = write!(sql, ",\n    PRIMARY KEY ({})", pk_col_names.join(", "));
         }
 
         // Unique indexes as constraints
@@ -151,14 +153,15 @@ pub trait Platform: Send + Sync {
                     .iter()
                     .map(|c| self.quote_identifier(c))
                     .collect();
-                if !index.name.is_empty() {
-                    sql.push_str(&format!(
+                if index.name.is_empty() {
+                    let _ = write!(sql, ",\n    UNIQUE ({})", col_names.join(", "));
+                } else {
+                    let _ = write!(
+                        sql,
                         ",\n    CONSTRAINT {} UNIQUE ({})",
                         self.quote_identifier(&index.name),
                         col_names.join(", ")
-                    ));
-                } else {
-                    sql.push_str(&format!(",\n    UNIQUE ({})", col_names.join(", ")));
+                    );
                 }
             }
         }
@@ -176,19 +179,20 @@ pub trait Platform: Send + Sync {
                 .map(|c| self.quote_identifier(c))
                 .collect();
 
-            sql.push_str(&format!(
+            let _ = write!(
+                sql,
                 ",\n    CONSTRAINT {} FOREIGN KEY ({}) REFERENCES {} ({})",
                 self.quote_identifier(&fk.name),
                 local_cols.join(", "),
                 self.quote_identifier(&fk.foreign_table),
                 foreign_cols.join(", ")
-            ));
+            );
 
             if fk.on_delete != super::types::ForeignKeyAction::NoAction {
-                sql.push_str(&format!(" ON DELETE {}", fk.on_delete.as_sql()));
+                let _ = write!(sql, " ON DELETE {}", fk.on_delete.as_sql());
             }
             if fk.on_update != super::types::ForeignKeyAction::NoAction {
-                sql.push_str(&format!(" ON UPDATE {}", fk.on_update.as_sql()));
+                let _ = write!(sql, " ON UPDATE {}", fk.on_update.as_sql());
             }
         }
 
@@ -247,7 +251,8 @@ pub trait Platform: Send + Sync {
     fn get_list_foreign_keys_sql(&self, table_name: &str) -> String;
 }
 
-/// PostgreSQL platform
+/// `PostgreSQL` platform
+#[derive(Debug, Default)]
 pub struct PostgresPlatform;
 
 impl Platform for PostgresPlatform {
@@ -274,25 +279,25 @@ impl Platform for PostgresPlatform {
             SqlType::BigInt => "BIGINT".to_string(),
             SqlType::Float => "REAL".to_string(),
             SqlType::Double => "DOUBLE PRECISION".to_string(),
-            SqlType::Decimal { precision, scale } => format!("NUMERIC({}, {})", precision, scale),
-            SqlType::Char { length } => format!("CHAR({})", length),
-            SqlType::Varchar { length } => format!("VARCHAR({})", length),
+            SqlType::Decimal { precision, scale } => format!("NUMERIC({precision}, {scale})"),
+            SqlType::Char { length } => format!("CHAR({length})"),
+            SqlType::Varchar { length } => format!("VARCHAR({length})"),
             SqlType::Text => "TEXT".to_string(),
-            SqlType::Binary { length: _ } => "BYTEA".to_string(), // PostgreSQL uses BYTEA
-            SqlType::VarBinary { length: _ } => "BYTEA".to_string(),
-            SqlType::Blob => "BYTEA".to_string(),
+            SqlType::Binary { .. } | SqlType::VarBinary { .. } | SqlType::Blob => {
+                "BYTEA".to_string() // PostgreSQL uses BYTEA
+            }
             SqlType::Boolean => "BOOLEAN".to_string(),
             SqlType::Date => "DATE".to_string(),
             SqlType::Time { precision } => match precision {
-                Some(p) => format!("TIME({})", p),
+                Some(p) => format!("TIME({p})"),
                 None => "TIME".to_string(),
             },
             SqlType::Timestamp { precision } => match precision {
-                Some(p) => format!("TIMESTAMP({})", p),
+                Some(p) => format!("TIMESTAMP({p})"),
                 None => "TIMESTAMP".to_string(),
             },
             SqlType::TimestampTz { precision } => match precision {
-                Some(p) => format!("TIMESTAMP({}) WITH TIME ZONE", p),
+                Some(p) => format!("TIMESTAMP({p}) WITH TIME ZONE"),
                 None => "TIMESTAMP WITH TIME ZONE".to_string(),
             },
             SqlType::Uuid => "UUID".to_string(),
@@ -309,8 +314,7 @@ impl Platform for PostgresPlatform {
     fn get_list_columns_sql(&self, table_name: &str) -> String {
         format!(
             "SELECT column_name, data_type, is_nullable, column_default, character_maximum_length, numeric_precision, numeric_scale \
-             FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '{}' ORDER BY ordinal_position",
-            table_name
+             FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '{table_name}' ORDER BY ordinal_position"
         )
     }
 
@@ -319,8 +323,7 @@ impl Platform for PostgresPlatform {
             "SELECT i.relname AS index_name, a.attname AS column_name, ix.indisunique AS is_unique, ix.indisprimary AS is_primary \
              FROM pg_class t, pg_class i, pg_index ix, pg_attribute a \
              WHERE t.oid = ix.indrelid AND i.oid = ix.indexrelid AND a.attrelid = t.oid AND a.attnum = ANY(ix.indkey) \
-             AND t.relkind = 'r' AND t.relname = '{}'",
-            table_name
+             AND t.relkind = 'r' AND t.relname = '{table_name}'"
         )
     }
 
@@ -330,13 +333,13 @@ impl Platform for PostgresPlatform {
              FROM information_schema.table_constraints AS tc \
              JOIN information_schema.key_column_usage AS kcu ON tc.constraint_name = kcu.constraint_name \
              JOIN information_schema.constraint_column_usage AS ccu ON ccu.constraint_name = tc.constraint_name \
-             WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name = '{}'",
-            table_name
+             WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name = '{table_name}'"
         )
     }
 }
 
-/// MySQL platform
+/// `MySQL` platform
+#[derive(Debug, Default)]
 pub struct MySqlPlatform;
 
 impl Platform for MySqlPlatform {
@@ -363,25 +366,25 @@ impl Platform for MySqlPlatform {
             SqlType::BigInt => "BIGINT".to_string(),
             SqlType::Float => "FLOAT".to_string(),
             SqlType::Double => "DOUBLE".to_string(),
-            SqlType::Decimal { precision, scale } => format!("DECIMAL({}, {})", precision, scale),
-            SqlType::Char { length } => format!("CHAR({})", length),
-            SqlType::Varchar { length } => format!("VARCHAR({})", length),
+            SqlType::Decimal { precision, scale } => format!("DECIMAL({precision}, {scale})"),
+            SqlType::Char { length } => format!("CHAR({length})"),
+            SqlType::Varchar { length } => format!("VARCHAR({length})"),
             SqlType::Text => "TEXT".to_string(),
-            SqlType::Binary { length } => format!("BINARY({})", length),
-            SqlType::VarBinary { length } => format!("VARBINARY({})", length),
+            SqlType::Binary { length } => format!("BINARY({length})"),
+            SqlType::VarBinary { length } => format!("VARBINARY({length})"),
             SqlType::Blob => "LONGBLOB".to_string(),
             SqlType::Boolean => "TINYINT(1)".to_string(), // MySQL uses TINYINT for boolean
             SqlType::Date => "DATE".to_string(),
             SqlType::Time { precision } => match precision {
-                Some(p) => format!("TIME({})", p),
+                Some(p) => format!("TIME({p})"),
                 None => "TIME".to_string(),
             },
             SqlType::Timestamp { precision } => match precision {
-                Some(p) => format!("DATETIME({})", p),
+                Some(p) => format!("DATETIME({p})"),
                 None => "DATETIME".to_string(),
             },
             SqlType::TimestampTz { precision } => match precision {
-                Some(p) => format!("TIMESTAMP({})", p),
+                Some(p) => format!("TIMESTAMP({p})"),
                 None => "TIMESTAMP".to_string(),
             },
             SqlType::Uuid => "CHAR(36)".to_string(), // MySQL doesn't have native UUID
@@ -401,11 +404,8 @@ impl Platform for MySqlPlatform {
             (type_decl, column.auto_increment)
         };
 
-        let mut sql = format!(
-            "{} {}",
-            self.quote_identifier(&column.name),
-            base_type
-        );
+        let quoted_name = self.quote_identifier(&column.name);
+        let mut sql = format!("{quoted_name} {base_type}");
 
         if !column.nullable {
             sql.push_str(" NOT NULL");
@@ -439,17 +439,15 @@ impl Platform for MySqlPlatform {
     fn get_list_columns_sql(&self, table_name: &str) -> String {
         format!(
             "SELECT column_name, data_type, is_nullable, column_default, character_maximum_length, numeric_precision, numeric_scale, extra \
-             FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = '{}' ORDER BY ordinal_position",
-            table_name
+             FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = '{table_name}' ORDER BY ordinal_position"
         )
     }
 
     fn get_list_indexes_sql(&self, table_name: &str) -> String {
         format!(
             "SELECT index_name, column_name, non_unique \
-             FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = '{}' \
-             ORDER BY index_name, seq_in_index",
-            table_name
+             FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = '{table_name}' \
+             ORDER BY index_name, seq_in_index"
         )
     }
 
@@ -457,13 +455,13 @@ impl Platform for MySqlPlatform {
         format!(
             "SELECT constraint_name, column_name, referenced_table_name, referenced_column_name \
              FROM information_schema.key_column_usage \
-             WHERE table_schema = DATABASE() AND table_name = '{}' AND referenced_table_name IS NOT NULL",
-            table_name
+             WHERE table_schema = DATABASE() AND table_name = '{table_name}' AND referenced_table_name IS NOT NULL"
         )
     }
 }
 
-/// SQLite platform
+/// `SQLite` platform
+#[derive(Debug, Default)]
 pub struct SqlitePlatform;
 
 impl Platform for SqlitePlatform {
@@ -486,18 +484,29 @@ impl Platform for SqlitePlatform {
     fn get_type_declaration(&self, sql_type: &SqlType) -> String {
         // SQLite uses dynamic typing with type affinity
         match sql_type {
-            SqlType::SmallInt | SqlType::Integer | SqlType::BigInt => "INTEGER".to_string(),
-            SqlType::Float | SqlType::Double => "REAL".to_string(),
-            SqlType::Decimal { .. } => "REAL".to_string(), // SQLite doesn't have DECIMAL
-            SqlType::Char { .. } | SqlType::Varchar { .. } | SqlType::Text => "TEXT".to_string(),
-            SqlType::Binary { .. } | SqlType::VarBinary { .. } | SqlType::Blob => "BLOB".to_string(),
-            SqlType::Boolean => "INTEGER".to_string(), // SQLite uses 0/1 for boolean
-            SqlType::Date | SqlType::Time { .. } | SqlType::Timestamp { .. } | SqlType::TimestampTz { .. } => {
-                "TEXT".to_string() // SQLite stores dates as TEXT
+            // Integer affinity
+            SqlType::SmallInt
+            | SqlType::Integer
+            | SqlType::BigInt
+            | SqlType::Boolean  // SQLite uses 0/1 for boolean
+            | SqlType::Serial
+            | SqlType::BigSerial => "INTEGER".to_string(),
+            // Real affinity
+            SqlType::Float | SqlType::Double | SqlType::Decimal { .. } => {
+                "REAL".to_string() // SQLite doesn't have DECIMAL
             }
-            SqlType::Uuid => "TEXT".to_string(),
-            SqlType::Json => "TEXT".to_string(), // SQLite has JSON functions but stores as TEXT
-            SqlType::Serial | SqlType::BigSerial => "INTEGER".to_string(),
+            // Text affinity
+            SqlType::Char { .. }
+            | SqlType::Varchar { .. }
+            | SqlType::Text
+            | SqlType::Date
+            | SqlType::Time { .. }
+            | SqlType::Timestamp { .. }
+            | SqlType::TimestampTz { .. }  // SQLite stores dates as TEXT
+            | SqlType::Uuid
+            | SqlType::Json => "TEXT".to_string(),  // SQLite has JSON functions but stores as TEXT
+            // Blob affinity
+            SqlType::Binary { .. } | SqlType::VarBinary { .. } | SqlType::Blob => "BLOB".to_string(),
         }
     }
 
@@ -526,6 +535,7 @@ impl Platform for SqlitePlatform {
     }
 
     fn get_create_table_sql(&self, table: &Table) -> String {
+        use std::fmt::Write;
         let mut sql = format!("CREATE TABLE {} (\n", self.quote_identifier(&table.name));
 
         // Check if we have an auto-increment column (which becomes the PK in SQLite)
@@ -546,7 +556,7 @@ impl Platform for SqlitePlatform {
                     .iter()
                     .map(|c| self.quote_identifier(c))
                     .collect();
-                sql.push_str(&format!(",\n    PRIMARY KEY ({})", pk_col_names.join(", ")));
+                let _ = write!(sql, ",\n    PRIMARY KEY ({})", pk_col_names.join(", "));
             }
         }
 
@@ -558,7 +568,7 @@ impl Platform for SqlitePlatform {
                     .iter()
                     .map(|c| self.quote_identifier(c))
                     .collect();
-                sql.push_str(&format!(",\n    UNIQUE ({})", col_names.join(", ")));
+                let _ = write!(sql, ",\n    UNIQUE ({})", col_names.join(", "));
             }
         }
 
@@ -575,18 +585,19 @@ impl Platform for SqlitePlatform {
                 .map(|c| self.quote_identifier(c))
                 .collect();
 
-            sql.push_str(&format!(
+            let _ = write!(
+                sql,
                 ",\n    FOREIGN KEY ({}) REFERENCES {} ({})",
                 local_cols.join(", "),
                 self.quote_identifier(&fk.foreign_table),
                 foreign_cols.join(", ")
-            ));
+            );
 
             if fk.on_delete != super::types::ForeignKeyAction::NoAction {
-                sql.push_str(&format!(" ON DELETE {}", fk.on_delete.as_sql()));
+                let _ = write!(sql, " ON DELETE {}", fk.on_delete.as_sql());
             }
             if fk.on_update != super::types::ForeignKeyAction::NoAction {
-                sql.push_str(&format!(" ON UPDATE {}", fk.on_update.as_sql()));
+                let _ = write!(sql, " ON UPDATE {}", fk.on_update.as_sql());
             }
         }
 

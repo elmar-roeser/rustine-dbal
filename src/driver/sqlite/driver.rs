@@ -1,4 +1,4 @@
-//! SQLite driver implementation
+//! `SQLite` driver implementation
 
 use async_trait::async_trait;
 use sqlx::sqlite::SqliteConnectOptions;
@@ -10,13 +10,14 @@ use crate::driver::Driver;
 
 use super::SqliteConnection;
 
-/// SQLite database driver
+/// `SQLite` database driver
 #[derive(Debug, Default)]
 pub struct SqliteDriver;
 
 impl SqliteDriver {
-    /// Create a new SQLite driver instance
-    pub fn new() -> Self {
+    /// Create a new `SQLite` driver instance
+    #[must_use]
+    pub const fn new() -> Self {
         Self
     }
 }

@@ -1,4 +1,4 @@
-//! FromSql trait for converting SQL values to Rust types
+//! `FromSql` trait for converting SQL values to Rust types
 //!
 //! This trait enables converting [`SqlValue`] instances back into
 //! concrete Rust types.
@@ -31,11 +31,19 @@ use super::{Error, Result, SqlValue};
 /// ```
 pub trait FromSql: Sized {
     /// Convert from a SQL value to this type
+    ///
+    /// # Errors
+    ///
+    /// Returns a conversion error if the SQL value cannot be converted to this type.
     fn from_sql(value: SqlValue) -> Result<Self>;
 
     /// Convert from a SQL value, allowing null as a valid input
     ///
     /// Returns `None` if the value is NULL, otherwise delegates to `from_sql`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the value is not NULL and cannot be converted.
     fn from_sql_nullable(value: SqlValue) -> Result<Option<Self>> {
         if value.is_null() {
             Ok(None)
@@ -56,7 +64,7 @@ impl FromSql for bool {
             SqlValue::String(s) => match s.to_lowercase().as_str() {
                 "true" | "t" | "1" | "yes" | "on" => Ok(true),
                 "false" | "f" | "0" | "no" | "off" => Ok(false),
-                _ => Err(Error::conversion("String", "bool", format!("invalid boolean string: {}", s))),
+                _ => Err(Error::conversion("String", "bool", format!("invalid boolean string: {s}"))),
             },
             _ => Err(Error::conversion(value_type_name(&value), "bool", "cannot convert to boolean")),
         }
@@ -70,7 +78,7 @@ impl FromSql for i8 {
             SqlValue::I16(i) => i.try_into().map_err(|_| Error::conversion("i16", "i8", "value out of range")),
             SqlValue::I32(i) => i.try_into().map_err(|_| Error::conversion("i32", "i8", "value out of range")),
             SqlValue::I64(i) => i.try_into().map_err(|_| Error::conversion("i64", "i8", "value out of range")),
-            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "i8", format!("invalid integer: {}", s))),
+            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "i8", format!("invalid integer: {s}"))),
             _ => Err(Error::conversion(value_type_name(&value), "i8", "cannot convert to i8")),
         }
     }
@@ -79,11 +87,11 @@ impl FromSql for i8 {
 impl FromSql for i16 {
     fn from_sql(value: SqlValue) -> Result<Self> {
         match value {
-            SqlValue::I8(i) => Ok(i as i16),
+            SqlValue::I8(i) => Ok(Self::from(i)),
             SqlValue::I16(i) => Ok(i),
             SqlValue::I32(i) => i.try_into().map_err(|_| Error::conversion("i32", "i16", "value out of range")),
             SqlValue::I64(i) => i.try_into().map_err(|_| Error::conversion("i64", "i16", "value out of range")),
-            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "i16", format!("invalid integer: {}", s))),
+            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "i16", format!("invalid integer: {s}"))),
             _ => Err(Error::conversion(value_type_name(&value), "i16", "cannot convert to i16")),
         }
     }
@@ -92,11 +100,11 @@ impl FromSql for i16 {
 impl FromSql for i32 {
     fn from_sql(value: SqlValue) -> Result<Self> {
         match value {
-            SqlValue::I8(i) => Ok(i as i32),
-            SqlValue::I16(i) => Ok(i as i32),
+            SqlValue::I8(i) => Ok(Self::from(i)),
+            SqlValue::I16(i) => Ok(Self::from(i)),
             SqlValue::I32(i) => Ok(i),
             SqlValue::I64(i) => i.try_into().map_err(|_| Error::conversion("i64", "i32", "value out of range")),
-            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "i32", format!("invalid integer: {}", s))),
+            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "i32", format!("invalid integer: {s}"))),
             _ => Err(Error::conversion(value_type_name(&value), "i32", "cannot convert to i32")),
         }
     }
@@ -105,12 +113,12 @@ impl FromSql for i32 {
 impl FromSql for i64 {
     fn from_sql(value: SqlValue) -> Result<Self> {
         match value {
-            SqlValue::I8(i) => Ok(i as i64),
-            SqlValue::I16(i) => Ok(i as i64),
-            SqlValue::I32(i) => Ok(i as i64),
+            SqlValue::I8(i) => Ok(Self::from(i)),
+            SqlValue::I16(i) => Ok(Self::from(i)),
+            SqlValue::I32(i) => Ok(Self::from(i)),
             SqlValue::I64(i) => Ok(i),
-            SqlValue::U32(u) => Ok(u as i64),
-            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "i64", format!("invalid integer: {}", s))),
+            SqlValue::U32(u) => Ok(Self::from(u)),
+            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "i64", format!("invalid integer: {s}"))),
             _ => Err(Error::conversion(value_type_name(&value), "i64", "cannot convert to i64")),
         }
     }
@@ -119,12 +127,12 @@ impl FromSql for i64 {
 impl FromSql for u32 {
     fn from_sql(value: SqlValue) -> Result<Self> {
         match value {
-            SqlValue::I8(i) if i >= 0 => Ok(i as u32),
-            SqlValue::I16(i) if i >= 0 => Ok(i as u32),
-            SqlValue::I32(i) if i >= 0 => Ok(i as u32),
+            SqlValue::I8(i) if i >= 0 => i.try_into().map_err(|_| Error::conversion("i8", "u32", "value out of range")),
+            SqlValue::I16(i) if i >= 0 => i.try_into().map_err(|_| Error::conversion("i16", "u32", "value out of range")),
+            SqlValue::I32(i) if i >= 0 => i.try_into().map_err(|_| Error::conversion("i32", "u32", "value out of range")),
             SqlValue::I64(i) => i.try_into().map_err(|_| Error::conversion("i64", "u32", "value out of range")),
             SqlValue::U32(u) => Ok(u),
-            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "u32", format!("invalid integer: {}", s))),
+            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "u32", format!("invalid integer: {s}"))),
             _ => Err(Error::conversion(value_type_name(&value), "u32", "cannot convert to u32")),
         }
     }
@@ -133,42 +141,44 @@ impl FromSql for u32 {
 impl FromSql for u64 {
     fn from_sql(value: SqlValue) -> Result<Self> {
         match value {
-            SqlValue::I8(i) if i >= 0 => Ok(i as u64),
-            SqlValue::I16(i) if i >= 0 => Ok(i as u64),
-            SqlValue::I32(i) if i >= 0 => Ok(i as u64),
-            SqlValue::I64(i) if i >= 0 => Ok(i as u64),
-            SqlValue::U32(u) => Ok(u as u64),
+            SqlValue::I8(i) if i >= 0 => i.try_into().map_err(|_| Error::conversion("i8", "u64", "value out of range")),
+            SqlValue::I16(i) if i >= 0 => i.try_into().map_err(|_| Error::conversion("i16", "u64", "value out of range")),
+            SqlValue::I32(i) if i >= 0 => i.try_into().map_err(|_| Error::conversion("i32", "u64", "value out of range")),
+            SqlValue::I64(i) if i >= 0 => i.try_into().map_err(|_| Error::conversion("i64", "u64", "value out of range")),
+            SqlValue::U32(u) => Ok(Self::from(u)),
             SqlValue::U64(u) => Ok(u),
-            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "u64", format!("invalid integer: {}", s))),
+            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "u64", format!("invalid integer: {s}"))),
             _ => Err(Error::conversion(value_type_name(&value), "u64", "cannot convert to u64")),
         }
     }
 }
 
 impl FromSql for f32 {
+    #[allow(clippy::cast_possible_truncation, clippy::cast_precision_loss)]
     fn from_sql(value: SqlValue) -> Result<Self> {
         match value {
             SqlValue::F32(f) => Ok(f),
-            SqlValue::F64(f) => Ok(f as f32),
-            SqlValue::I8(i) => Ok(i as f32),
-            SqlValue::I16(i) => Ok(i as f32),
-            SqlValue::I32(i) => Ok(i as f32),
-            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "f32", format!("invalid float: {}", s))),
+            SqlValue::F64(f) => Ok(f as Self),
+            SqlValue::I8(i) => Ok(Self::from(i)),
+            SqlValue::I16(i) => Ok(Self::from(i)),
+            SqlValue::I32(i) => Ok(i as Self),
+            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "f32", format!("invalid float: {s}"))),
             _ => Err(Error::conversion(value_type_name(&value), "f32", "cannot convert to f32")),
         }
     }
 }
 
 impl FromSql for f64 {
+    #[allow(clippy::cast_precision_loss)]
     fn from_sql(value: SqlValue) -> Result<Self> {
         match value {
-            SqlValue::F32(f) => Ok(f as f64),
+            SqlValue::F32(f) => Ok(Self::from(f)),
             SqlValue::F64(f) => Ok(f),
-            SqlValue::I8(i) => Ok(i as f64),
-            SqlValue::I16(i) => Ok(i as f64),
-            SqlValue::I32(i) => Ok(i as f64),
-            SqlValue::I64(i) => Ok(i as f64),
-            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "f64", format!("invalid float: {}", s))),
+            SqlValue::I8(i) => Ok(Self::from(i)),
+            SqlValue::I16(i) => Ok(Self::from(i)),
+            SqlValue::I32(i) => Ok(Self::from(i)),
+            SqlValue::I64(i) => Ok(i as Self),
+            SqlValue::String(s) => s.parse().map_err(|_| Error::conversion("String", "f64", format!("invalid float: {s}"))),
             _ => Err(Error::conversion(value_type_name(&value), "f64", "cannot convert to f64")),
         }
     }
@@ -224,7 +234,7 @@ impl FromSql for chrono::NaiveDate {
     fn from_sql(value: SqlValue) -> Result<Self> {
         match value {
             SqlValue::Date(d) => Ok(d),
-            SqlValue::String(s) => chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d")
+            SqlValue::String(s) => Self::parse_from_str(&s, "%Y-%m-%d")
                 .map_err(|e| Error::conversion("String", "NaiveDate", e.to_string())),
             _ => Err(Error::conversion(value_type_name(&value), "NaiveDate", "cannot convert to date")),
         }
@@ -236,8 +246,8 @@ impl FromSql for chrono::NaiveTime {
     fn from_sql(value: SqlValue) -> Result<Self> {
         match value {
             SqlValue::Time(t) => Ok(t),
-            SqlValue::String(s) => chrono::NaiveTime::parse_from_str(&s, "%H:%M:%S")
-                .or_else(|_| chrono::NaiveTime::parse_from_str(&s, "%H:%M:%S%.f"))
+            SqlValue::String(s) => Self::parse_from_str(&s, "%H:%M:%S")
+                .or_else(|_| Self::parse_from_str(&s, "%H:%M:%S%.f"))
                 .map_err(|e| Error::conversion("String", "NaiveTime", e.to_string())),
             _ => Err(Error::conversion(value_type_name(&value), "NaiveTime", "cannot convert to time")),
         }
@@ -249,10 +259,10 @@ impl FromSql for chrono::NaiveDateTime {
     fn from_sql(value: SqlValue) -> Result<Self> {
         match value {
             SqlValue::DateTime(dt) => Ok(dt),
-            SqlValue::String(s) => chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%d %H:%M:%S")
-                .or_else(|_| chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%d %H:%M:%S%.f"))
-                .or_else(|_| chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S"))
-                .or_else(|_| chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S%.f"))
+            SqlValue::String(s) => Self::parse_from_str(&s, "%Y-%m-%d %H:%M:%S")
+                .or_else(|_| Self::parse_from_str(&s, "%Y-%m-%d %H:%M:%S%.f"))
+                .or_else(|_| Self::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S"))
+                .or_else(|_| Self::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S%.f"))
                 .map_err(|e| Error::conversion("String", "NaiveDateTime", e.to_string())),
             _ => Err(Error::conversion(value_type_name(&value), "NaiveDateTime", "cannot convert to datetime")),
         }
@@ -279,9 +289,9 @@ impl FromSql for uuid::Uuid {
     fn from_sql(value: SqlValue) -> Result<Self> {
         match value {
             SqlValue::Uuid(u) => Ok(u),
-            SqlValue::String(s) => uuid::Uuid::parse_str(&s)
+            SqlValue::String(s) => Self::parse_str(&s)
                 .map_err(|e| Error::conversion("String", "Uuid", e.to_string())),
-            SqlValue::Bytes(b) => uuid::Uuid::from_slice(&b)
+            SqlValue::Bytes(b) => Self::from_slice(&b)
                 .map_err(|e| Error::conversion("Bytes", "Uuid", e.to_string())),
             _ => Err(Error::conversion(value_type_name(&value), "Uuid", "cannot convert to uuid")),
         }
@@ -307,11 +317,11 @@ impl FromSql for rust_decimal::Decimal {
 
         match value {
             SqlValue::Decimal(d) => Ok(d),
-            SqlValue::I8(i) => Ok(rust_decimal::Decimal::from(i)),
-            SqlValue::I16(i) => Ok(rust_decimal::Decimal::from(i)),
-            SqlValue::I32(i) => Ok(rust_decimal::Decimal::from(i)),
-            SqlValue::I64(i) => Ok(rust_decimal::Decimal::from(i)),
-            SqlValue::String(s) => rust_decimal::Decimal::from_str(&s)
+            SqlValue::I8(i) => Ok(Self::from(i)),
+            SqlValue::I16(i) => Ok(Self::from(i)),
+            SqlValue::I32(i) => Ok(Self::from(i)),
+            SqlValue::I64(i) => Ok(Self::from(i)),
+            SqlValue::String(s) => Self::from_str(&s)
                 .map_err(|e| Error::conversion("String", "Decimal", e.to_string())),
             _ => Err(Error::conversion(value_type_name(&value), "Decimal", "cannot convert to decimal")),
         }
@@ -319,7 +329,7 @@ impl FromSql for rust_decimal::Decimal {
 }
 
 /// Get a human-readable type name for error messages
-fn value_type_name(value: &SqlValue) -> &'static str {
+const fn value_type_name(value: &SqlValue) -> &'static str {
     match value {
         SqlValue::Null => "NULL",
         SqlValue::Bool(_) => "Bool",

@@ -1,4 +1,4 @@
-//! SQLite connection implementation
+//! `SQLite` connection implementation
 
 use async_trait::async_trait;
 use sqlx::sqlite::SqliteConnection as SqlxSqliteConnection;
@@ -11,16 +11,26 @@ use crate::driver::DriverConnection;
 
 use super::{SqliteResult, SqliteStatement};
 
-/// SQLite database connection
+/// `SQLite` database connection
 ///
 /// Uses a single connection (not a pool) to ensure transactions work correctly.
 pub struct SqliteConnection {
+    /// The underlying sqlx connection wrapped in a mutex for thread safety
     inner: Mutex<SqlxSqliteConnection>,
+    /// Whether a transaction is currently active
     in_transaction: AtomicBool,
 }
 
+impl std::fmt::Debug for SqliteConnection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SqliteConnection")
+            .field("in_transaction", &self.in_transaction.load(std::sync::atomic::Ordering::Relaxed))
+            .finish_non_exhaustive()
+    }
+}
+
 impl SqliteConnection {
-    /// Create a new SQLite connection
+    /// Create a new `SQLite` connection
     pub(crate) fn new(conn: SqlxSqliteConnection) -> Self {
         Self {
             inner: Mutex::new(conn),
