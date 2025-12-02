@@ -80,6 +80,9 @@ pub mod prelude {
 
     // Query Builder
     pub use crate::query::{QueryBuilder, Expr};
+
+    // Schema
+    pub use crate::schema::{SchemaManager, TableInfo, ColumnInfo};
 }
 
 // Re-export commonly used types at crate root

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-12-02
+
+### Added
+- **Schema Introspection** (Epic 6)
+  - `SchemaManager` struct for database introspection and manipulation
+  - `list_table_names()` - List all tables in the database
+  - `list_table_columns(table)` - Get column information for a table
+  - `list_table_indexes(table)` - Get index information for a table
+  - `list_table_foreign_keys(table)` - Get foreign key information
+  - `table_exists(name)` - Check if a table exists
+  - `introspect_table(name)` - Get complete table information
+  - `create_table(Table)` - Create a table from definition
+  - `drop_table(name)` / `drop_table_if_exists(name)` - Drop tables
+  - `create_index(table, Index)` / `drop_index(name, table)` - Manage indexes
+  - `ColumnInfo`, `IndexInfo`, `ForeignKeyInfo`, `TableInfo` structs
+  - Platform-specific parsing for SQLite PRAGMA results
+  - 13 new unit tests for schema introspection (124 tests total)
+
 ## [0.4.0] - 2025-12-02
 
 ### Added
@@ -116,7 +134,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - GitHub repository set up
 - .gitignore for Rust projects
 
-[Unreleased]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.1.0...v0.2.0

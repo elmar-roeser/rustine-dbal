@@ -116,7 +116,7 @@ rustine-dbal/
 - [x] **Epic 3**: Transaction Management
 - [x] **Epic 4**: Platform Abstraction (PostgreSQL, MySQL, SQLite dialects)
 - [x] **Epic 5**: Query Builder
-- [ ] **Epic 6**: Schema Introspection
+- [x] **Epic 6**: Schema Introspection
 
 ## Documentation
 
