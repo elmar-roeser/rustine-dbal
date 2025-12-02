@@ -3,7 +3,7 @@
 //! The [`SqlValue`] enum provides a type-safe representation of all values
 //! that can be stored in or retrieved from a database.
 
-use crate::ParameterType;
+use super::ParameterType;
 
 /// A database value that can represent any SQL type
 ///

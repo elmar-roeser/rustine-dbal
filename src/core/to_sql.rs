@@ -3,7 +3,7 @@
 //! This trait enables any Rust type to be converted into a [`SqlValue`]
 //! for use in query parameters.
 
-use crate::{Result, SqlValue};
+use super::{Result, SqlValue};
 
 /// Trait for types that can be converted to SQL values
 ///
@@ -12,7 +12,8 @@ use crate::{Result, SqlValue};
 /// # Example
 ///
 /// ```rust
-/// use rustine_core::{ToSql, SqlValue, Result};
+/// use rustine_dbal::{Result, SqlValue};
+/// use rustine_dbal::core::ToSql;
 ///
 /// struct Money {
 ///     cents: i64,

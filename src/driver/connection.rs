@@ -1,9 +1,9 @@
 //! Driver connection trait
 
 use async_trait::async_trait;
-use rustine_core::Result;
+use crate::core::Result;
 
-use crate::{DriverStatement, DriverResult};
+use super::{DriverStatement, DriverResult};
 
 /// A connection to a database
 #[async_trait]

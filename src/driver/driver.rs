@@ -1,9 +1,9 @@
 //! Driver trait for database abstraction
 
 use async_trait::async_trait;
-use rustine_core::{ConnectionParams, Result};
+use crate::core::{ConnectionParams, Result};
 
-use crate::DriverConnection;
+use super::DriverConnection;
 
 /// A database driver that can create connections
 #[async_trait]

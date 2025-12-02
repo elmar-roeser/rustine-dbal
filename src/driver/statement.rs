@@ -1,9 +1,9 @@
 //! Driver statement trait
 
 use async_trait::async_trait;
-use rustine_core::{Result, SqlValue};
+use crate::core::{Result, SqlValue};
 
-use crate::DriverResult;
+use super::DriverResult;
 
 /// A prepared statement
 #[async_trait]

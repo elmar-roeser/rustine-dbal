@@ -1,4 +1,4 @@
-//! # Rustine
+//! # Rustine DBAL
 //!
 //! Rustine is an idiomatic Rust Database Abstraction Layer inspired by Doctrine DBAL.
 //!
@@ -11,10 +11,18 @@
 //! - **Platform Abstraction**: Write once, run on PostgreSQL, MySQL, SQLite
 //! - **Type System**: Bidirectional conversion between Rust and SQL types
 //!
+//! ## Modules
+//!
+//! - [`core`] - Core types, traits, and errors
+//! - [`driver`] - Database driver abstractions
+//! - [`platform`] - SQL dialect implementations
+//! - [`query`] - Query builder (coming soon)
+//! - [`schema`] - Schema introspection (coming soon)
+//!
 //! ## Quick Start
 //!
 //! ```rust,ignore
-//! use rustine::prelude::*;
+//! use rustine_dbal::prelude::*;
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<()> {
@@ -34,10 +42,35 @@
 //! }
 //! ```
 
-// Re-export core types
-pub use rustine_core::*;
+pub mod core;
+pub mod driver;
+pub mod platform;
+pub mod query;
+pub mod schema;
 
 /// Prelude module for convenient imports
+///
+/// ```rust
+/// use rustine_dbal::prelude::*;
+/// ```
 pub mod prelude {
-    pub use rustine_core::prelude::*;
+    // Core types
+    pub use crate::core::{
+        Error, Result, ConnectionError, TransactionError, SchemaError, QueryError,
+        SqlValue, ToSql, FromSql,
+        ParameterType,
+        Configuration, ConnectionParams, IsolationLevel,
+    };
+
+    // Driver traits
+    pub use crate::driver::{
+        Driver, DriverConnection, DriverStatement, DriverResult,
+    };
+
+    // Platform traits
+    pub use crate::platform::Platform;
 }
+
+// Re-export commonly used types at crate root
+pub use core::{Error, Result, SqlValue, ToSql, FromSql};
+pub use core::{Configuration, ConnectionParams};

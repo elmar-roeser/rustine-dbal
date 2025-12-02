@@ -1,6 +1,6 @@
 //! Driver result trait
 
-use rustine_core::{Result, SqlValue};
+use crate::core::{Result, SqlValue};
 
 /// A result set from a query
 pub trait DriverResult: Send + Sync {

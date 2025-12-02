@@ -3,7 +3,7 @@
 //! This trait enables converting [`SqlValue`] instances back into
 //! concrete Rust types.
 
-use crate::{Error, Result, SqlValue};
+use super::{Error, Result, SqlValue};
 
 /// Trait for types that can be created from SQL values
 ///
@@ -12,7 +12,8 @@ use crate::{Error, Result, SqlValue};
 /// # Example
 ///
 /// ```rust
-/// use rustine_core::{FromSql, SqlValue, Result, Error};
+/// use rustine_dbal::{Error, Result, SqlValue};
+/// use rustine_dbal::core::FromSql;
 ///
 /// struct Money {
 ///     cents: i64,

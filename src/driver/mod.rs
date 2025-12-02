@@ -1,8 +1,8 @@
-//! # Rustine Driver
+//! # Driver Module
 //!
 //! Database driver abstractions for Rustine DBAL.
 //!
-//! This crate provides the `Driver` and `DriverConnection` traits that
+//! This module provides the `Driver` and `DriverConnection` traits that
 //! define the interface between Rustine and underlying database clients.
 
 pub mod driver;

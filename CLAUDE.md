@@ -119,19 +119,33 @@ enum DbalError {
 async fn execute(&self, sql: &str) -> Result<u64, DbalError>;
 ```
 
-### Crate-Struktur Vorschlag
+### Modul-Struktur
 
 ```
-rustine/
-├── rustine-core/        # Traits, Types, Error definitions
-├── rustine-driver/      # Driver trait + implementations
-│   ├── postgres/
-│   ├── mysql/
-│   └── sqlite/
-├── rustine-platform/    # SQL dialect implementations
-├── rustine-schema/      # Schema introspection & management
-├── rustine-query/       # QueryBuilder
-└── rustine/             # Re-exports, convenience API
+rustine-dbal/
+└── src/
+    ├── lib.rs           # Hauptmodul, re-exports, prelude
+    ├── core/            # Traits, Types, Error definitions
+    │   ├── mod.rs
+    │   ├── error.rs
+    │   ├── sql_value.rs
+    │   ├── to_sql.rs
+    │   ├── from_sql.rs
+    │   ├── parameter.rs
+    │   └── config.rs
+    ├── driver/          # Driver trait abstractions
+    │   ├── mod.rs
+    │   ├── driver.rs
+    │   ├── connection.rs
+    │   ├── statement.rs
+    │   └── result.rs
+    ├── platform/        # SQL dialect implementations
+    │   ├── mod.rs
+    │   └── platform.rs
+    ├── query/           # QueryBuilder (TODO)
+    │   └── mod.rs
+    └── schema/          # Schema introspection (TODO)
+        └── mod.rs
 ```
 
 ### Rust-Ökosystem Integration
@@ -201,23 +215,25 @@ Später: Oracle, DB2 (falls Rust-Treiber verfügbar)
 
 ## Implementierungs-Status
 
-### Phase 1: Core Foundation (IN PROGRESS)
+### Phase 1: Core Foundation (DONE)
 
-**rustine-core** - IMPLEMENTIERT:
+**core/** - IMPLEMENTIERT:
 - Error types (Error, ConnectionError, TransactionError, QueryError, SchemaError)
 - SqlValue enum mit Feature-Flags (chrono, uuid, json, decimal)
 - ToSql / FromSql traits mit Implementierungen
 - Configuration (ConnectionParams, Configuration, IsolationLevel)
 - ParameterType enum
-- 38 Unit Tests, alle bestanden
+- 38 Unit Tests
 
-**rustine-driver** - STRUKTUR:
+**driver/** - STRUKTUR:
 - Driver, DriverConnection, DriverStatement, DriverResult traits definiert
 
-**rustine-platform** - STRUKTUR:
+**platform/** - STRUKTUR:
 - Platform trait definiert
 - PostgresPlatform, MySqlPlatform, SqlitePlatform Grundstruktur
 - 5 Unit Tests
+
+**Gesamt: 43 Unit Tests, 3 Doc Tests**
 
 ### Nächste Schritte
 
