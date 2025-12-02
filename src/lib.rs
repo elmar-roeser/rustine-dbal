@@ -67,6 +67,10 @@ pub mod prelude {
         Driver, DriverConnection, DriverStatement, DriverResult,
     };
 
+    // SQLite driver (when enabled)
+    #[cfg(feature = "sqlite")]
+    pub use crate::driver::{SqliteDriver, SqliteConnection, SqliteStatement, SqliteResult};
+
     // Platform traits
     pub use crate::platform::Platform;
 }

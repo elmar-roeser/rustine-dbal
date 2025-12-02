@@ -7,6 +7,15 @@ und dieses Projekt folgt [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Added
+- **SQLite Driver** (Epic 2: Database Connectivity)
+  - `SqliteDriver` - Treiber-Implementierung mit sqlx
+  - `SqliteConnection` - Verbindungsmanagement mit Transaktions-Support
+  - `SqliteStatement` - Prepared Statements mit positional/named Parameters
+  - `SqliteResult` - Ergebnisset-Iteration
+  - Feature-Flag `sqlite` für optionale Aktivierung
+  - 12 neue Unit-Tests für SQLite-Funktionalität
+
 ### Changed
 - **BREAKING**: Projekt von Multi-Crate Workspace zu Monolith-Crate umstrukturiert
 - Crate umbenannt von `rustine` zu `rustine-dbal`
