@@ -6,5 +6,7 @@
 //! PostgreSQL, MySQL, and SQLite.
 
 mod platform;
+mod types;
 
 pub use platform::*;
+pub use types::*;

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-12-02
+
+### Added
+- **Platform Abstraction** (Epic 4)
+  - `SqlType` enum with all common SQL types (INTEGER, VARCHAR, DECIMAL, TIMESTAMP, etc.)
+  - `Column` struct for column definitions with nullable, default, auto_increment options
+  - `Table` struct for complete table definitions
+  - `Index` struct for index definitions (primary, unique, regular)
+  - `ForeignKey` struct with ON DELETE/UPDATE actions
+  - Type mapping: `get_type_declaration()` for platform-specific SQL types
+  - DDL generation: `get_create_table_sql()`, `get_drop_table_sql()`, `get_create_index_sql()`
+  - Column declaration: `get_column_declaration()` with platform-specific handling
+  - Schema introspection SQL: `get_list_tables_sql()`, `get_list_columns_sql()`, `get_list_indexes_sql()`, `get_list_foreign_keys_sql()`
+  - Platform-specific implementations for PostgreSQL, MySQL, and SQLite
+  - 18 new unit tests for platform functionality (83 tests total)
+
+### Changed
+- Extended `Platform` trait with type mapping and DDL generation methods
+- SQLite `release_savepoint_sql()` now uses correct SQLite syntax (RELEASE without SAVEPOINT keyword)
+
 ## [0.2.0] - 2025-12-02
 
 ### Added
@@ -79,6 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - GitHub repository set up
 - .gitignore for Rust projects
 
-[Unreleased]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/elmar-roeser/rustine-dbal/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/elmar-roeser/rustine-dbal/releases/tag/v0.1.0
