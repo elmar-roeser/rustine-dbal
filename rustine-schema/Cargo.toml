@@ -1,0 +1,16 @@
+[package]
+name = "rustine-schema"
+description = "Schema introspection and management for Rustine DBAL"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+rustine-core.workspace = true
+rustine-platform.workspace = true
+async-trait.workspace = true

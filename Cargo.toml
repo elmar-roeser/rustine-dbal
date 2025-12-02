@@ -1,0 +1,54 @@
+[workspace]
+resolver = "2"
+members = [
+    "rustine",
+    "rustine-core",
+    "rustine-driver",
+    "rustine-platform",
+    "rustine-query",
+    "rustine-schema",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+authors = ["Elmar"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/elmar/rustine"
+keywords = ["database", "sql", "dbal", "query-builder", "schema"]
+categories = ["database"]
+
+[workspace.dependencies]
+# Core dependencies
+thiserror = "2.0"
+async-trait = "0.1"
+futures = "0.3"
+
+# Database drivers
+sqlx = { version = "0.8", features = ["runtime-tokio"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Types
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+rust_decimal = { version = "1.0", features = ["serde"] }
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# Logging/Tracing
+tracing = "0.1"
+
+# Testing
+tokio-test = "0.4"
+
+# Internal crates
+rustine-core = { path = "rustine-core", version = "0.1.0" }
+rustine-driver = { path = "rustine-driver", version = "0.1.0" }
+rustine-platform = { path = "rustine-platform", version = "0.1.0" }
+rustine-query = { path = "rustine-query", version = "0.1.0" }
+rustine-schema = { path = "rustine-schema", version = "0.1.0" }

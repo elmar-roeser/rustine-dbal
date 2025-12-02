@@ -1,0 +1,28 @@
+[package]
+name = "rustine-core"
+description = "Core types, traits, and errors for Rustine DBAL"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+thiserror.workspace = true
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+chrono = { workspace = true, optional = true }
+uuid = { workspace = true, optional = true }
+rust_decimal = { workspace = true, optional = true }
+
+[features]
+default = ["chrono", "uuid", "json", "decimal"]
+chrono = ["dep:chrono"]
+uuid = ["dep:uuid"]
+json = ["dep:serde", "dep:serde_json"]
+decimal = ["dep:rust_decimal"]
+
+[dev-dependencies]

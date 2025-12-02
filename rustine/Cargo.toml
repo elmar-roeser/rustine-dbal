@@ -1,0 +1,24 @@
+[package]
+name = "rustine"
+description = "Idiomatic Rust Database Abstraction Layer inspired by Doctrine DBAL"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+rustine-core.workspace = true
+# rustine-driver.workspace = true
+# rustine-platform.workspace = true
+# rustine-query.workspace = true
+# rustine-schema.workspace = true
+
+[features]
+default = ["postgres", "mysql", "sqlite"]
+postgres = []
+mysql = []
+sqlite = []
